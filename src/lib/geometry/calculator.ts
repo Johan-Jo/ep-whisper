@@ -19,6 +19,15 @@ export function calculateCeilingGross(geometry: RoomGeometry): number {
 }
 
 /**
+ * Calculate gross floor area (before deductions)
+ * Formula: W * L (same as ceiling)
+ */
+export function calculateFloorGross(geometry: RoomGeometry): number {
+  const { W, L } = geometry;
+  return W * L;
+}
+
+/**
  * Calculate total opening deductions (doors + windows)
  */
 export function calculateOpeningsTotal(geometry: RoomGeometry): number {
@@ -80,6 +89,14 @@ export function calculateCeilingNet(geometry: RoomGeometry): number {
 }
 
 /**
+ * Calculate net floor area
+ * For MVP, floor has no deductions (assumes empty floor)
+ */
+export function calculateFloorNet(geometry: RoomGeometry): number {
+  return calculateFloorGross(geometry);
+}
+
+/**
  * Calculate room perimeter for trim/list calculations
  * Formula: 2 * (W + L)
  */
@@ -116,16 +133,20 @@ export function roundPieces(pieces: number): number {
 export function calculateRoom(geometry: RoomGeometry): RoomCalculation {
   const walls_gross = calculateWallsGross(geometry);
   const ceiling_gross = calculateCeilingGross(geometry);
+  const floor_gross = calculateFloorGross(geometry);
   const openings_total = calculateOpeningsTotal(geometry);
   const wardrobes_deduction = calculateWardrobesDeduction(geometry);
   const walls_net = calculateWallsNet(geometry);
   const ceiling_net = calculateCeilingNet(geometry);
+  const floor_net = calculateFloorNet(geometry);
 
   return {
     walls_gross: roundArea(walls_gross),
     walls_net: roundArea(walls_net),
     ceiling_gross: roundArea(ceiling_gross),
     ceiling_net: roundArea(ceiling_net),
+    floor_gross: roundArea(floor_gross),
+    floor_net: roundArea(floor_net),
     openings_total: roundArea(openings_total),
     wardrobes_deduction: roundArea(wardrobes_deduction),
   };

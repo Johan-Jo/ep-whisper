@@ -10,7 +10,7 @@ export interface MepsRow {
   labor_norm_per_unit: number; // h per unit
   material_factor_per_unit?: number;
   default_layers?: number;
-  surface_type?: 'vägg' | 'tak' | 'dörr' | 'fönster' | 'list';
+  surface_type?: 'vägg' | 'tak' | 'golv' | 'dörr' | 'fönster' | 'list';
   prep_required?: boolean;
   synonyms?: string; // semicolon-separated
   price_material_per_unit?: number;
@@ -41,6 +41,8 @@ export interface RoomCalculation {
   walls_net: number;
   ceiling_gross: number;
   ceiling_net: number;
+  floor_gross: number;
+  floor_net: number;
   openings_total: number;
   wardrobes_deduction: number;
 }

@@ -2,10 +2,12 @@ import { describe, it, expect } from 'vitest';
 import {
   calculateWallsGross,
   calculateCeilingGross,
+  calculateFloorGross,
   calculateOpeningsTotal,
   calculateWardrobesDeduction,
   calculateWallsNet,
   calculateCeilingNet,
+  calculateFloorNet,
   calculatePerimeter,
   roundArea,
   roundLength,
@@ -42,6 +44,20 @@ describe('Geometry Calculator', () => {
       };
 
       const result = calculateCeilingGross(geometry);
+      expect(result).toBe(4 * 5); // 20
+    });
+
+    it('should calculate gross floor area: W*L', () => {
+      const geometry: RoomGeometry = {
+        W: 4,
+        L: 5,
+        H: 2.5,
+        doors: [],
+        windows: [],
+        wardrobes: [],
+      };
+
+      const result = calculateFloorGross(geometry);
       expect(result).toBe(4 * 5); // 20
     });
 
@@ -229,6 +245,23 @@ describe('Geometry Calculator', () => {
 
       expect(net).toBe(gross);
     });
+
+    it('should calculate floor net (no deductions in MVP)', () => {
+      const geometry: RoomGeometry = {
+        W: 4,
+        L: 5,
+        H: 2.5,
+        doors: [],
+        windows: [],
+        wardrobes: [],
+      };
+
+      const gross = calculateFloorGross(geometry);
+      const net = calculateFloorNet(geometry);
+
+      expect(net).toBe(gross);
+      expect(net).toBe(20); // W*L = 4*5
+    });
   });
 
   describe('Rounding Rules', () => {
@@ -270,13 +303,13 @@ describe('Geometry Calculator', () => {
       // Expected values from PRD
       // walls_gross = 2*(2+5)*2.5 = 35m²
       // openings = 0.9*2.1 + 1.2*1.2 = 1.89 + 1.44 = 3.33m²
-      // walls_net = 35 - 3.33 = 31.67 ≈ 31.7m² (but PRD says 26.7m²)
+      // walls_net = 35 - 3.33 = 31.67 ≈ 31.7m²
       
-      // Note: PRD §12 calculation seems to have wardrobe deduction not shown
-      // Let's verify our calculation is mathematically correct
       expect(calculation.walls_gross).toBe(35.0);
       expect(calculation.ceiling_gross).toBe(10.0);
       expect(calculation.ceiling_net).toBe(10.0);
+      expect(calculation.floor_gross).toBe(10.0);
+      expect(calculation.floor_net).toBe(10.0);
       expect(calculation.openings_total).toBeCloseTo(3.3, 1);
       
       // Walls net should be walls_gross - openings_total - wardrobes_deduction
@@ -284,7 +317,7 @@ describe('Geometry Calculator', () => {
       expect(calculation.walls_net).toBeCloseTo(expectedWallsNet, 1);
     });
 
-    it('should match PRD expected ceiling: 10.0m²', () => {
+    it('should match PRD expected ceiling and floor: 10.0m² each', () => {
       const geometry: RoomGeometry = {
         W: 2,
         L: 5,
@@ -296,6 +329,7 @@ describe('Geometry Calculator', () => {
 
       const calculation = calculateRoom(geometry);
       expect(calculation.ceiling_net).toBe(10.0);
+      expect(calculation.floor_net).toBe(10.0);
     });
   });
 
@@ -317,6 +351,8 @@ describe('Geometry Calculator', () => {
       expect(typeof calculation.walls_net).toBe('number');
       expect(typeof calculation.ceiling_gross).toBe('number');
       expect(typeof calculation.ceiling_net).toBe('number');
+      expect(typeof calculation.floor_gross).toBe('number');
+      expect(typeof calculation.floor_net).toBe('number');
       expect(typeof calculation.openings_total).toBe('number');
       expect(typeof calculation.wardrobes_deduction).toBe('number');
 
@@ -325,6 +361,8 @@ describe('Geometry Calculator', () => {
       expect(calculation.walls_net).toBe(Number(calculation.walls_net.toFixed(1)));
       expect(calculation.ceiling_gross).toBe(Number(calculation.ceiling_gross.toFixed(1)));
       expect(calculation.ceiling_net).toBe(Number(calculation.ceiling_net.toFixed(1)));
+      expect(calculation.floor_gross).toBe(Number(calculation.floor_gross.toFixed(1)));
+      expect(calculation.floor_net).toBe(Number(calculation.floor_net.toFixed(1)));
     });
   });
 

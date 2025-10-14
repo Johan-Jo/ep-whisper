@@ -213,6 +213,7 @@ export class MepsCatalog {
       tasksBySurfaceType: {
         vägg: this.getTasksBySurfaceType('vägg').length,
         tak: this.getTasksBySurfaceType('tak').length,
+        golv: this.getTasksBySurfaceType('golv').length,
         dörr: this.getTasksBySurfaceType('dörr').length,
         fönster: this.getTasksBySurfaceType('fönster').length,
         list: this.getTasksBySurfaceType('list').length,

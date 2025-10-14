@@ -12,7 +12,7 @@ export const MepsRowSchema = z.object({
   labor_norm_per_unit: z.number().positive('labor_norm_per_unit must be positive'),
   material_factor_per_unit: z.number().optional(),
   default_layers: z.number().int().positive().optional(),
-  surface_type: z.enum(['vägg', 'tak', 'dörr', 'fönster', 'list']).nullish(),
+  surface_type: z.enum(['vägg', 'tak', 'golv', 'dörr', 'fönster', 'list']).nullish(),
   prep_required: z.boolean().optional(),
   synonyms: z.string().optional(),
   price_material_per_unit: z.number().nonnegative().optional(),

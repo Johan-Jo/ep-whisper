@@ -8,9 +8,13 @@
  *   npm run import-excel -- <path-to-excel-file>
  */
 
-import { parseExcelFile, getCatalog } from '../src/lib/excel';
-import * as path from 'path';
-import * as fs from 'fs';
+import { parseExcelFile, getCatalog } from '../src/lib/excel/index.js';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const COLORS = {
   reset: '\x1b[0m',
@@ -75,6 +79,7 @@ async function main() {
       log(`   By surface type:`, 'blue');
       log(`     - vägg (walls):    ${stats.tasksBySurfaceType.vägg}`, 'blue');
       log(`     - tak (ceiling):   ${stats.tasksBySurfaceType.tak}`, 'blue');
+      log(`     - golv (floor):    ${stats.tasksBySurfaceType.golv}`, 'blue');
       log(`     - dörr (doors):    ${stats.tasksBySurfaceType.dörr}`, 'blue');
       log(`     - fönster (windows): ${stats.tasksBySurfaceType.fönster}`, 'blue');
       log(`     - list (trim):     ${stats.tasksBySurfaceType.list}`, 'blue');

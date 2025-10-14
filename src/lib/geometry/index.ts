@@ -6,6 +6,8 @@ export {
   calculateWallsNet,
   calculateCeilingGross,
   calculateCeilingNet,
+  calculateFloorGross,
+  calculateFloorNet,
   calculateOpeningsTotal,
   calculateWardrobesDeduction,
   calculatePerimeter,

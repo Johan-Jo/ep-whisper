@@ -8,8 +8,13 @@
  *   npm run calculate-room -- 4 5 2.5
  */
 
-import { calculateRoom, validateGeometry } from '../src/lib/geometry';
-import { RoomGeometry } from '../src/lib/types';
+import { calculateRoom, validateGeometry } from '../src/lib/geometry/index.js';
+import { RoomGeometry } from '../src/lib/types.js';
+import { fileURLToPath } from 'url';
+import path from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const COLORS = {
   reset: '\x1b[0m',
@@ -154,6 +159,7 @@ function main() {
   log(`   Walls (gross):  ${calculation.walls_gross.toFixed(1)}m²`, 'green');
   log(`   Walls (net):    ${calculation.walls_net.toFixed(1)}m²`, 'green');
   log(`   Ceiling:        ${calculation.ceiling_net.toFixed(1)}m²`, 'green');
+  log(`   Floor:          ${calculation.floor_net.toFixed(1)}m²`, 'green');
   
   log('\n📏 Deductions:', 'cyan');
   log(`   Openings:       ${calculation.openings_total.toFixed(1)}m²`, 'yellow');
@@ -162,12 +168,14 @@ function main() {
   log('\n🎯 Summary:', 'cyan');
   log(`   Total paintable walls:   ${calculation.walls_net.toFixed(1)}m²`, 'magenta');
   log(`   Total paintable ceiling: ${calculation.ceiling_net.toFixed(1)}m²`, 'magenta');
+  log(`   Total paintable floor:   ${calculation.floor_net.toFixed(1)}m²`, 'magenta');
   log(`   Room perimeter (trim):   ${(2 * (geometry.W + geometry.L)).toFixed(1)}lpm`, 'magenta');
 
   // Swedish decimal format
   log('\n🇸🇪 Swedish Format:', 'cyan');
   log(`   Väggar:  ${calculation.walls_net.toFixed(1).replace('.', ',')}m²`, 'blue');
   log(`   Tak:     ${calculation.ceiling_net.toFixed(1).replace('.', ',')}m²`, 'blue');
+  log(`   Golv:    ${calculation.floor_net.toFixed(1).replace('.', ',')}m²`, 'blue');
   
   log('');
 }

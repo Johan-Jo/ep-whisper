@@ -7,9 +7,14 @@
  *   ts-node scripts/generate-sample-excel.ts [output-path]
  */
 
-import * as XLSX from 'xlsx';
-import * as path from 'path';
-import * as fs from 'fs';
+import XLSX from 'xlsx';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const SAMPLE_TASKS = [
   // Vägg (wall) tasks - m2
@@ -105,6 +110,47 @@ const SAMPLE_TASKS = [
     synonyms: 'måla tak;färg tak;täckmåla tak',
     price_labor_per_hour: 500,
     price_material_per_unit: 18,
+  },
+  
+  // Golv (floor) tasks - m2
+  {
+    meps_id: 'MÅL-GOLV-BETONG-M2',
+    task_name_sv: 'Måla betonggolv',
+    task_name_en: 'Paint concrete floor',
+    unit: 'm2',
+    labor_norm_per_unit: 0.13,
+    material_factor_per_unit: 0.15,
+    default_layers: 2,
+    surface_type: 'golv',
+    synonyms: 'golv betong;betonggolv;golvmålning',
+    price_labor_per_hour: 500,
+    price_material_per_unit: 22,
+  },
+  {
+    meps_id: 'MÅL-GOLV-TRÄ-M2',
+    task_name_sv: 'Måla trägolv',
+    task_name_en: 'Paint wooden floor',
+    unit: 'm2',
+    labor_norm_per_unit: 0.16,
+    material_factor_per_unit: 0.18,
+    default_layers: 2,
+    surface_type: 'golv',
+    synonyms: 'golv trä;trägolv;parkettmålning',
+    price_labor_per_hour: 500,
+    price_material_per_unit: 28,
+  },
+  {
+    meps_id: 'MÅL-GOLV-GRUNDMÅL-M2',
+    task_name_sv: 'Grundmåla golv',
+    task_name_en: 'Prime floor',
+    unit: 'm2',
+    labor_norm_per_unit: 0.10,
+    material_factor_per_unit: 0.12,
+    default_layers: 1,
+    surface_type: 'golv',
+    synonyms: 'grundmåla golv;primer golv',
+    price_labor_per_hour: 500,
+    price_material_per_unit: 16,
   },
   
   // Dörr (door) tasks - st (pieces)
@@ -362,6 +408,7 @@ async function main() {
   console.log(`📊 Distribution:`);
   console.log(`   - Vägg (walls):    ${SAMPLE_TASKS.filter(t => t.surface_type === 'vägg').length}`);
   console.log(`   - Tak (ceiling):   ${SAMPLE_TASKS.filter(t => t.surface_type === 'tak').length}`);
+  console.log(`   - Golv (floor):    ${SAMPLE_TASKS.filter(t => t.surface_type === 'golv').length}`);
   console.log(`   - Dörr (doors):    ${SAMPLE_TASKS.filter(t => t.surface_type === 'dörr').length}`);
   console.log(`   - Fönster (windows): ${SAMPLE_TASKS.filter(t => t.surface_type === 'fönster').length}`);
   console.log(`   - List (trim):     ${SAMPLE_TASKS.filter(t => t.surface_type === 'list').length}`);
