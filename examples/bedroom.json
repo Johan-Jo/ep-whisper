@@ -1,0 +1,21 @@
+{
+  "geometry": {
+    "W": 4.0,
+    "L": 5.0,
+    "H": 2.5,
+    "doors": [{}],
+    "windows": [
+      { "w": 1.2, "h": 1.5 }
+    ],
+    "wardrobes": [
+      { "length": 2.5, "coverage_pct": 100 }
+    ]
+  },
+  "tasks": [
+    { "phrase": "bredspackla väggar" },
+    { "phrase": "grundmåla väggar" },
+    { "phrase": "täckmåla väggar", "layers": 2 },
+    { "phrase": "måla tak", "layers": 2 },
+    { "phrase": "måla taklist", "layers": 2 }
+  ]
+}

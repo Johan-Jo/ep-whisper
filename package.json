@@ -15,7 +15,8 @@
     "format:check": "prettier --check .",
     "import-excel": "tsx scripts/import-excel.ts",
     "generate-sample": "tsx scripts/generate-sample-excel.ts",
-    "calculate-room": "tsx scripts/calculate-room.ts"
+    "calculate-room": "tsx scripts/calculate-room.ts",
+    "estimate-room": "tsx scripts/estimate-room.ts"
   },
   "dependencies": {
     "next": "15.5.5",

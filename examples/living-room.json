@@ -1,0 +1,28 @@
+{
+  "geometry": {
+    "W": 6.0,
+    "L": 7.5,
+    "H": 2.7,
+    "doors": [
+      {},
+      { "w": 1.6, "h": 2.1, "sides": 2 }
+    ],
+    "windows": [
+      { "w": 1.8, "h": 1.5 },
+      { "w": 1.8, "h": 1.5 },
+      { "w": 1.2, "h": 1.2 }
+    ],
+    "wardrobes": []
+  },
+  "tasks": [
+    { "phrase": "bredspackla väggar" },
+    { "phrase": "slipa väggar" },
+    { "phrase": "grundmåla väggar" },
+    { "phrase": "täckmåla väggar", "layers": 2 },
+    { "phrase": "bredspackla tak" },
+    { "phrase": "måla tak", "layers": 2 },
+    { "phrase": "måla betonggolv", "layers": 2 },
+    { "phrase": "måla taklist", "layers": 2 },
+    { "phrase": "måla golvlist", "layers": 2 }
+  ]
+}
