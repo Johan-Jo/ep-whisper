@@ -5,7 +5,7 @@ A voice-driven companion to EstimatePro that turns spoken room walkthroughs into
 ## Features
 
 - **Swedish-only voice recognition** (sv-SE) with Whisper integration
-- **Excel-based MEPS catalog** - strict whitelist of painting tasks
+- **Excel-based catalog** - strict whitelist of painting tasks
 - **Real-time geometry calculations** with opening and wardrobe deductions
 - **Dynamic template instances** for contextual task suggestions
 - **Voice corrections and undo** via event logging
