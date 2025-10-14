@@ -13,8 +13,9 @@
     "test:run": "vitest run",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "import-excel": "ts-node --project scripts/tsconfig.json scripts/import-excel.ts",
-    "generate-sample": "ts-node --project scripts/tsconfig.json scripts/generate-sample-excel.ts"
+    "import-excel": "tsx scripts/import-excel.ts",
+    "generate-sample": "tsx scripts/generate-sample-excel.ts",
+    "calculate-room": "tsx scripts/calculate-room.ts"
   },
   "dependencies": {
     "next": "15.5.5",
@@ -40,6 +41,7 @@
     "prettier": "^3.6.2",
     "tailwindcss": "^4",
     "ts-node": "^10.9.2",
+    "tsx": "^4.20.6",
     "typescript": "^5",
     "vitest": "^3.2.4"
   }
