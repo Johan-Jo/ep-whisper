@@ -7,7 +7,7 @@
  *   ts-node scripts/generate-sample-excel.ts [output-path]
  */
 
-import XLSX from 'xlsx';
+import * as XLSX from 'xlsx';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
