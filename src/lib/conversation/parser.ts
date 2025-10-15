@@ -250,18 +250,99 @@ function parsePaintingTasksFallback(transcription: string): string[] {
   const text = transcription.toLowerCase();
   const tasks: string[] = [];
   
-  // Common Swedish painting task patterns (ordered by specificity)
+  // First try to parse the whole text (handles most cases)
+  const wholeTextTasks = parsePaintingTasksInText(text);
+  if (wholeTextTasks.length > 0) {
+    return wholeTextTasks.filter(task => isValidPaintingTask(task));
+  }
+  
+  // If no tasks found, try splitting by commas and reconstructing phrases
+  const parts = text.split(',').map(part => part.trim()).filter(part => part.length > 0);
+  
+  // Try to reconstruct painting phrases from comma-separated parts
+  const reconstructedPhrases = reconstructPaintingPhrases(parts);
+  
+  for (const phrase of reconstructedPhrases) {
+    const phraseTasks = parsePaintingTasksInText(phrase);
+    tasks.push(...phraseTasks);
+  }
+  
+  // Filter out invalid/non-painting tasks
+  return tasks.filter(task => isValidPaintingTask(task));
+}
+
+/**
+ * Reconstruct painting phrases from comma-separated parts
+ */
+function reconstructPaintingPhrases(parts: string[]): string[] {
+  const phrases: string[] = [];
+  let currentPhrase = '';
+  
+  for (let i = 0; i < parts.length; i++) {
+    const part = parts[i];
+    
+    // If this looks like the start of a painting task
+    if (part.match(/^(måla|grundmåla|spackla|tapetsera|struk)$/)) {
+      // Save previous phrase if it exists
+      if (currentPhrase.trim()) {
+        phrases.push(currentPhrase.trim());
+      }
+      // Start new phrase
+      currentPhrase = part;
+    }
+    // If we have a current phrase and this looks like a surface
+    else if (currentPhrase && part.match(/^(väggar?|tak|dörrar?|fönster|golv|lister?|radiatorer?)$/)) {
+      currentPhrase += ' ' + part;
+    }
+    // If this looks like layer information
+    else if (currentPhrase && part.match(/^(två|tre|fyra|fem|\d+)\s*(lager|skikt|gånger)$/)) {
+      currentPhrase += ' ' + part;
+    }
+    // If this is a complete standalone task
+    else if (part.match(/^(måla|grundmåla)\s+(väggar?|tak|dörrar?|fönster|golv|lister?|radiatorer?)/)) {
+      phrases.push(part);
+    }
+    // Otherwise, add to current phrase if we have one
+    else if (currentPhrase) {
+      currentPhrase += ' ' + part;
+    }
+  }
+  
+  // Add the last phrase if it exists
+  if (currentPhrase.trim()) {
+    phrases.push(currentPhrase.trim());
+  }
+  
+  return phrases;
+}
+
+/**
+ * Parse painting tasks from a single text segment
+ */
+function parsePaintingTasksInText(text: string): string[] {
+  const tasks: string[] = [];
+  
+  // Common Swedish painting task patterns (ordered by specificity to avoid overlaps)
   const taskPatterns = [
-    { pattern: /grundmåla(tak|taket)/gi, task: 'grundmåla tak' },
-    { pattern: /grundmåla\s+(?!tak)/gi, task: 'grundmåla' }, // Exclude "tak" from general grundmåla
+    // Grundmåla patterns (most specific first)
+    { pattern: /grundmåla\s+(tak|taket)/gi, task: 'grundmåla tak' },
+    { pattern: /grundmåla\s+(väggar?|vägg)/gi, task: 'grundmåla väggar' },
+    { pattern: /grundmåla\s+(dörrar?|dörr)/gi, task: 'grundmåla dörrar' },
+    { pattern: /grundmåla\s+(fönster)/gi, task: 'grundmåla fönster' },
+    { pattern: /grundmåla\s+(golv)/gi, task: 'grundmåla golv' },
+    { pattern: /\bgrundmåla\b(?!\s+(tak|väggar?|dörrar?|fönster|golv))/gi, task: 'grundmåla' }, // General grundmåla (negative lookahead)
+    
+    // Måla patterns (avoiding grundmåla matches)
+    { pattern: /\bmåla\s+(väggar?|vägg|bäggar)\b/gi, task: 'måla väggar' }, // Include common mispronunciation
+    { pattern: /\bmåla\s+(tak)\b/gi, task: 'måla tak' },
+    { pattern: /\bmåla\s+(golv)\b/gi, task: 'måla golv' },
+    { pattern: /\bmåla\s+(dörrar?|dörr)\b/gi, task: 'måla dörrar' },
+    { pattern: /\bmåla\s+(fönster|fönsterramar?)\b/gi, task: 'måla fönster' },
+    { pattern: /\bmåla\s+(lister?|golvlister?|taklister?)\b/gi, task: 'måla lister' },
+    { pattern: /\bmåla\s+(radiatorer?)\b/gi, task: 'måla radiatorer' },
+    
+    // Other patterns
     { pattern: /målarbänka/gi, task: 'måla bänk' },
-    { pattern: /måla\s+(väggar?|vägg|bäggar)/gi, task: 'måla väggar' }, // Include common mispronunciation
-    { pattern: /måla\s+(tak)/gi, task: 'måla tak' },
-    { pattern: /måla\s+(golv)/gi, task: 'måla golv' },
-    { pattern: /måla\s+(dörrar?|dörr)/gi, task: 'måla dörrar' },
-    { pattern: /måla\s+(fönster|fönsterramar?)/gi, task: 'måla fönster' },
-    { pattern: /måla\s+(lister?|golvlister?|taklister?)/gi, task: 'måla lister' },
-    { pattern: /måla\s+(radiatorer?)/gi, task: 'måla radiatorer' },
     { pattern: /spackla\s+(\w+)/gi, task: 'spackla' },
     { pattern: /tapetsera/gi, task: 'tapetsera' },
     { pattern: /struk/gi, task: 'struk' },
@@ -273,13 +354,43 @@ function parsePaintingTasksFallback(transcription: string): string[] {
     }
   }
   
+  // Remove duplicates while preserving order
+  const uniqueTasks = [...new Set(tasks)];
+  
   // Extract layer information if mentioned
-  const layerMatch = text.match(/(\d+)\s+(lager|skikt|gånger)/i);
-  if (layerMatch && tasks.length > 0) {
-    const layers = parseInt(layerMatch[1]);
-    return tasks.map(task => `${task} (${layers} lager)`);
+  const layerMatch = text.match(/(två|tre|fyra|fem|\d+)\s+(lager|skikt|gånger)/i);
+  if (layerMatch && uniqueTasks.length > 0) {
+    const layerText = layerMatch[1];
+    const layers = layerText === 'två' ? 2 : 
+                  layerText === 'tre' ? 3 : 
+                  layerText === 'fyra' ? 4 : 
+                  layerText === 'fem' ? 5 : 
+                  parseInt(layerText);
+    return uniqueTasks.map(task => `${task} (${layers} lager)`);
   }
   
-  return tasks;
+  return uniqueTasks;
+}
+
+/**
+ * Validate if a task is a legitimate painting task
+ */
+function isValidPaintingTask(task: string): boolean {
+  const validTasks = [
+    'måla väggar', 'måla tak', 'måla dörrar', 'måla fönster', 'måla golv', 'måla lister', 'måla radiatorer',
+    'grundmåla väggar', 'grundmåla tak', 'grundmåla dörrar', 'grundmåla fönster', 'grundmåla golv',
+    'spackla', 'tapetsera', 'struk', 'måla bänk'
+  ];
+  
+  const taskLower = task.toLowerCase();
+  
+  // Check if it's a valid painting task
+  const isValid = validTasks.some(validTask => taskLower.includes(validTask));
+  
+  // Also check for common non-painting words that should be filtered out
+  const invalidWords = ['slå', 'hit', 'strike', 'knacka', 'knock', 'krossa', 'break', 'såga', 'saw'];
+  const hasInvalidWord = invalidWords.some(word => taskLower.includes(word));
+  
+  return isValid && !hasInvalidWord;
 }
 
