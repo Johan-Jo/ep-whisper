@@ -6,8 +6,8 @@
  */
 
 import { parseSwedishIntent, validateParsedIntent, formatParsedIntent, type ParsedIntent } from './parser';
-import { mapSpokenTaskToMeps, type TaskMapping } from '@/lib/pricing/mapper';
-import { type RoomCalculation, type MepsRow } from '@/lib/types';
+import { mapSpokenTaskToMeps, calculateUnitPrice } from '@/lib/pricing/mapper';
+import { type RoomCalculation, type MepsRow, type LineItem } from '@/lib/types';
 import { type VoiceProcessingResult } from '@/lib/openai';
 import { MepsCatalog } from '@/lib/excel/catalog';
 
@@ -21,7 +21,7 @@ export interface VoiceEstimateResult {
   success: boolean;
   transcription: string;
   parsedIntent: ParsedIntent;
-  mappedTasks: TaskMapping[];
+  mappedTasks: LineItem[];
   estimate: {
     subtotal: number;
     markup: number;
@@ -57,7 +57,7 @@ export async function generateEstimateFromVoice(
     }
     
     // Step 3: Map each parsed task to MEPS catalog
-    const mappedTasks: TaskMapping[] = [];
+    const mappedTasks: LineItem[] = [];
     
     for (const task of parsedIntent.tasks) {
       try {
@@ -66,15 +66,35 @@ export async function generateEstimateFromVoice(
         console.log('🔍 Mapping spoken task:', spokenTask);
         
         // Map to MEPS using existing mapper
-        const mapping = mapSpokenTaskToMeps(spokenTask, request.mepsCatalog);
-        console.log('📋 Mapping result:', mapping);
+        const mappingResult = mapSpokenTaskToMeps(spokenTask, request.mepsCatalog, task.surface);
+        console.log('📋 Mapping result:', mappingResult);
         
-        if (mapping) {
-          // Adjust quantity based on parsed intent
-          mapping.quantity = task.quantity;
-          mapping.subtotal = mapping.unitPrice * task.quantity;
+        if (mappingResult && mappingResult.task) {
+          const mepsTask = mappingResult.task;
           
-          mappedTasks.push(mapping);
+          // Calculate quantity based on surface area
+          const surfaceArea = getSurfaceArea(task.surface, request.roomCalculation);
+          const quantity = surfaceArea * task.quantity; // Apply layers multiplier
+          
+          // Calculate unit price
+          const unitPrice = calculateUnitPrice(mepsTask, {
+            laborRateSek: mepsTask.price_labor_per_hour || 450,
+            markupPct: 0.15
+          });
+          
+          console.log('💰 Unit price:', unitPrice, 'Quantity:', quantity);
+          
+          // Create line item
+          const lineItem: LineItem = {
+            meps_id: mepsTask.meps_id,
+            name: mepsTask.task_name_sv,
+            unit: mepsTask.unit,
+            qty: Math.round(quantity * 10) / 10, // Round to 1 decimal
+            unit_price: Math.round(unitPrice * 100) / 100, // Round to 2 decimals
+            subtotal: Math.round(unitPrice * quantity * 100) / 100
+          };
+          
+          mappedTasks.push(lineItem);
         } else {
           console.warn('⚠️ Could not map task:', spokenTask);
           errors.push(`Could not map task: ${spokenTask}`);
@@ -115,6 +135,28 @@ export async function generateEstimateFromVoice(
       estimate: { subtotal: 0, markup: 0, total: 0, currency: 'SEK' },
       errors
     };
+  }
+}
+
+/**
+ * Get surface area from room calculation based on surface type
+ */
+function getSurfaceArea(surfaceType: string, roomCalc: RoomCalculation): number {
+  switch (surfaceType) {
+    case 'vägg':
+      return roomCalc.walls_net;
+    case 'tak':
+      return roomCalc.ceiling_net;
+    case 'golv':
+      return roomCalc.floor_net;
+    case 'dörr':
+      return roomCalc.door_area;
+    case 'fönster':
+      return roomCalc.window_area;
+    case 'list':
+      return roomCalc.perimeter;
+    default:
+      return 0;
   }
 }
 
