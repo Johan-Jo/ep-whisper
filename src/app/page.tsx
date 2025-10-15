@@ -4,8 +4,10 @@ import { useState, useEffect } from 'react';
 import { VoiceInterface } from '@/components/voice';
 import type { VoiceProcessingResult } from '@/lib/openai';
 import { generateEstimateFromVoice, formatVoiceEstimateResult } from '@/lib/nlp';
-import type { RoomCalculation, MepsRow } from '@/lib/types';
+import type { RoomCalculation, MepsRow, LineItem } from '@/lib/types';
 import { MepsCatalog } from '@/lib/excel/catalog';
+import { PDFExportButton } from '@/components/estimate/PDFExportButton';
+import type { PDFEstimateData } from '@/lib/pdf/types';
 
 export default function Home() {
   const [width, setWidth] = useState('4');
@@ -19,6 +21,7 @@ export default function Home() {
   const [apiKeyStatus, setApiKeyStatus] = useState<'unknown' | 'present' | 'missing'>('unknown');
   const [voiceEstimate, setVoiceEstimate] = useState<string>('');
   const [voiceEstimateLoading, setVoiceEstimateLoading] = useState(false);
+  const [pdfData, setPdfData] = useState<PDFEstimateData | null>(null);
 
   // Check API key status on mount
   useEffect(() => {
@@ -334,6 +337,21 @@ export default function Home() {
                       console.log('📄 Formatted estimate:', formattedEstimate);
                       setVoiceEstimate(formattedEstimate);
                       
+                      // Prepare PDF data
+                      if (estimateResult.success && estimateResult.mappedTasks) {
+                        const pdfEstimateData: PDFEstimateData = {
+                          roomName: 'Rum',
+                          date: new Date(),
+                          geometry: roomCalculation,
+                          lineItems: estimateResult.mappedTasks,
+                          subtotal: estimateResult.estimate?.subtotal || 0,
+                          markup: estimateResult.estimate?.markup || 0,
+                          markupPercent: 15,
+                          total: estimateResult.estimate?.total || 0,
+                        };
+                        setPdfData(pdfEstimateData);
+                      }
+                      
                     } catch (error) {
                       console.error('Error generating voice estimate:', error);
                       setVoiceEstimate(`❌ Fel vid generering av offert: ${error instanceof Error ? error.message : 'Okänt fel'}`);
@@ -399,9 +417,20 @@ export default function Home() {
             <h2 className="text-2xl font-semibold mb-4 text-lime-400">Offert / Estimate</h2>
             
             {estimate ? (
-              <pre className="bg-black text-lime-300 p-4 rounded overflow-x-auto text-xs font-mono whitespace-pre">
-                {estimate}
-              </pre>
+              <div className="space-y-4">
+                <pre className="bg-black text-lime-300 p-4 rounded overflow-x-auto text-xs font-mono whitespace-pre">
+                  {estimate}
+                </pre>
+                
+                {pdfData && (
+                  <div className="flex justify-end">
+                    <PDFExportButton 
+                      data={pdfData}
+                      filename={`offert-${pdfData.roomName.toLowerCase().replace(/\s+/g, '-')}.pdf`}
+                    />
+                  </div>
+                )}
+              </div>
             ) : (
               <div className="text-center text-gray-500 py-12">
                 <p className="text-lg">Fyll i rumsmått och klicka på "Skapa offert"</p>
