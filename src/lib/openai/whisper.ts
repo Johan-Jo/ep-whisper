@@ -44,10 +44,12 @@ export async function transcribeAudio(
         ? Buffer.from(audioBuffer) 
         : audioBuffer;
 
-      // Create a File-like object for the API
-      const audioFile = new File([buffer], 'audio.wav', { type: 'audio/wav' });
+      // Create a File-like object for the API with proper format detection
+      const audioFormat = detectAudioFormat(buffer);
+      console.log(`Audio format detected: ${audioFormat.mimeType}, size: ${buffer.length} bytes`);
+      const audioFile = new File([buffer], `audio.${audioFormat.extension}`, { type: audioFormat.mimeType });
 
-      const response = await openai.audio.transcriptions.create({
+      const response = await openai.client.audio.transcriptions.create({
         file: audioFile,
         model: WHISPER_CONFIG.model,
         language: WHISPER_CONFIG.language,
@@ -155,6 +157,33 @@ function normalizeSwedishText(text: string): string {
     .replace(/\s+/g, ' ')
     // Ensure proper decimal comma formatting
     .replace(/(\d+)\.(\d+)/g, '$1,$2');
+}
+
+/**
+ * Detect audio format from buffer
+ */
+function detectAudioFormat(buffer: Buffer): { mimeType: string; extension: string } {
+  // Check for common audio file headers
+  const header = buffer.toString('hex', 0, Math.min(8, buffer.length));
+  
+  if (header.startsWith('52494646')) {
+    // RIFF header - could be WAV or WebM
+    const subheader = buffer.toString('hex', 8, 12);
+    if (subheader === '57415645') {
+      return { mimeType: 'audio/wav', extension: 'wav' };
+    } else if (subheader === '5745424d') {
+      return { mimeType: 'audio/webm', extension: 'webm' };
+    }
+  } else if (header.startsWith('fffb') || header.startsWith('fffa')) {
+    return { mimeType: 'audio/mpeg', extension: 'mp3' };
+  } else if (header.startsWith('00000020')) {
+    return { mimeType: 'audio/mp4', extension: 'mp4' };
+  } else if (header.startsWith('4f676753')) {
+    return { mimeType: 'audio/ogg', extension: 'ogg' };
+  }
+  
+  // Default to webm (most common for browser recording)
+  return { mimeType: 'audio/webm', extension: 'webm' };
 }
 
 /**
