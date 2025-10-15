@@ -6,8 +6,8 @@
  */
 
 import { parseSwedishIntent, validateParsedIntent, formatParsedIntent, type ParsedIntent } from './parser';
-import { mapTaskToMeps, type MepsRow, type TaskMapping } from '@/lib/pricing/mapper';
-import { type RoomCalculation } from '@/lib/types';
+import { mapSpokenTaskToMeps, type TaskMapping } from '@/lib/pricing/mapper';
+import { type RoomCalculation, type MepsRow } from '@/lib/types';
 import { type VoiceProcessingResult } from '@/lib/openai';
 
 export interface VoiceEstimateRequest {
@@ -64,7 +64,7 @@ export async function generateEstimateFromVoice(
         const spokenTask = createSpokenTaskDescription(task);
         
         // Map to MEPS using existing mapper
-        const mapping = mapTaskToMeps(spokenTask, request.mepsCatalog);
+        const mapping = mapSpokenTaskToMeps(spokenTask, request.mepsCatalog);
         
         if (mapping) {
           // Adjust quantity based on parsed intent
