@@ -57,19 +57,19 @@ export function VoiceRecorder({
           sizeKB: Math.round(blob.size / 1000)
         });
         
-        // Process voice input
+        // Process voice input (just transcription, no TTS confirmation for conversational mode)
         const result = await processVoiceInput(arrayBuffer, {
-          enableConfirmation: true,
-          confidenceThreshold: 0.7,
+          enableConfirmation: false, // Disable TTS confirmation to avoid errors
+          confidenceThreshold: 0.3,  // Lower threshold for better acceptance
         });
 
-        if (result.success && result.transcription.text) {
+        if (result.success && result.transcription?.text) {
           setLastTranscription(result.transcription.text);
           setLastConfidence(result.transcription.confidence);
           onTranscriptionComplete?.(result);
         } else {
-          const errorMsg = 'Failed to transcribe audio or low confidence';
-          onError?.(errorMsg);
+          // Still call the callback with failed result so conversational mode can handle it
+          onTranscriptionComplete?.(result);
         }
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : 'Voice processing failed';
