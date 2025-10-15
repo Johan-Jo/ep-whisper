@@ -25,7 +25,12 @@ class PerformanceMonitor {
   constructor() {
     // Enable in development or if explicitly set
     this.enabled = process.env.NODE_ENV === 'development' || 
-                   process.env.NEXT_PUBLIC_ENABLE_PERFORMANCE_MONITORING === 'true';
+                   process.env.NEXT_PUBLIC_ENABLE_PERFORMANCE_MONITORING === 'true' ||
+                   typeof window !== 'undefined'; // Always enable in browser
+    
+    console.log(`🔧 [PERF] Performance monitoring ${this.enabled ? 'ENABLED' : 'DISABLED'}`);
+    console.log(`🔧 [PERF] NODE_ENV: ${process.env.NODE_ENV}`);
+    console.log(`🔧 [PERF] NEXT_PUBLIC_ENABLE_PERFORMANCE_MONITORING: ${process.env.NEXT_PUBLIC_ENABLE_PERFORMANCE_MONITORING}`);
   }
 
   /**
@@ -164,6 +169,21 @@ class PerformanceMonitor {
   reset(): void {
     this.clear();
     console.log('🔄 [PERF] Performance monitoring reset');
+  }
+
+  /**
+   * Manually enable performance monitoring
+   */
+  enable(): void {
+    this.enabled = true;
+    console.log('✅ [PERF] Performance monitoring manually enabled');
+  }
+
+  /**
+   * Check if performance monitoring is enabled
+   */
+  isEnabled(): boolean {
+    return this.enabled;
   }
 }
 

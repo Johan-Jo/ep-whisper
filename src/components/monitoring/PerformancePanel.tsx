@@ -7,8 +7,13 @@ export function PerformancePanel() {
   const [report, setReport] = useState<PerformanceReport | null>(null);
   const [isVisible, setIsVisible] = useState(false);
 
-  // Listen for performance updates
+  // Ensure performance monitoring is enabled and listen for updates
   useEffect(() => {
+    // Enable performance monitoring if not already enabled
+    if (!perfMonitor.isEnabled()) {
+      perfMonitor.enable();
+    }
+
     const interval = setInterval(() => {
       const currentReport = perfMonitor.generateReport();
       if (currentReport.totalDuration > 0) {
