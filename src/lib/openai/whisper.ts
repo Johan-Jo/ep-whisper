@@ -245,10 +245,12 @@ export function validateAudioBuffer(audioBuffer: Buffer | ArrayBuffer): void {
     : audioBuffer;
 
   // Check for common audio file headers
+  const header = buffer.toString('hex', 0, Math.min(8, buffer.length));
   const hasAudioHeader = buffer.length > 4 && (
-    buffer.toString('hex', 0, 4) === '52494646' || // RIFF (WAV)
-    buffer.toString('hex', 0, 2) === 'fffb' ||     // MP3
-    buffer.toString('hex', 0, 8) === '00000020'    // MP4
+    header.startsWith('52494646') || // RIFF (WAV)
+    header.startsWith('1a45dfa3') || // WebM (EBML)
+    header.startsWith('fffb') ||     // MP3
+    header.startsWith('00000020')    // MP4
   );
 
   if (!hasAudioHeader) {

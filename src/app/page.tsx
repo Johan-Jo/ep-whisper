@@ -592,10 +592,10 @@ ${summary.tasks.map((t, i) => `  ${i + 1}. ${t}`).join('\n')}
           <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
             <h2 className="text-2xl font-semibold mb-4 text-lime-400">Offert / Estimate</h2>
             
-            {estimate ? (
+            {(estimate || voiceEstimate) ? (
               <div className="space-y-4">
                 <pre className="bg-black text-lime-300 p-4 rounded overflow-x-auto text-xs font-mono whitespace-pre">
-                  {estimate}
+                  {estimate || voiceEstimate}
                 </pre>
                 
                 {pdfData && (

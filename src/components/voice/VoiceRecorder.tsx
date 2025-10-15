@@ -38,7 +38,7 @@ export function VoiceRecorder({
     requestPermission,
   } = useAudioRecorder({
     maxRecordingTime: 30000, // 30 seconds max
-    audioType: 'audio/wav',
+    audioType: 'audio/webm',
     sampleRate: 16000, // 16kHz for Whisper
     channels: 1, // Mono
     onRecordingComplete: async (blob) => {

@@ -8,7 +8,8 @@ import {
   parseMeasurements, 
   isDone, 
   wantsToAddMore,
-  isConfirmation 
+  isConfirmation,
+  parsePaintingTasks 
 } from './parser';
 
 export class ConversationManager {
@@ -166,15 +167,35 @@ export class ConversationManager {
       };
     }
     
-    // Add the task
-    this.state.tasks.push({
-      phrase: text,
-      transcription: text,
-    });
+    // Parse painting tasks from the input
+    const parsedTasks = parsePaintingTasks(text);
     
+    if (parsedTasks.length === 0) {
+      // If no tasks were parsed, treat the whole input as a task
+      this.state.tasks.push({
+        phrase: text,
+        transcription: text,
+      });
+      
+      return {
+        success: true,
+        message: `Lade till: ${text}. Fortsätt eller säg "klar".`,
+        nextPrompt: 'Nästa uppgift? Eller säg "klar" om du är färdig.',
+      };
+    }
+    
+    // Add all parsed tasks
+    for (const task of parsedTasks) {
+      this.state.tasks.push({
+        phrase: task,
+        transcription: text,
+      });
+    }
+    
+    const taskList = parsedTasks.join(', ');
     return {
       success: true,
-      message: `Lade till: ${text}. Fortsätt eller säg "klar".`,
+      message: `Lade till: ${taskList}. Fortsätt eller säg "klar".`,
       nextPrompt: 'Nästa uppgift? Eller säg "klar" om du är färdig.',
     };
   }

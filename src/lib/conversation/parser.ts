@@ -115,9 +115,10 @@ export function isDone(transcription: string): boolean {
   // Remove punctuation and extra words
   const cleaned = text.replace(/[!?.]/g, '').trim();
   
-  // Match various "done" expressions
+  // Match various "done" expressions - including "KLAR" in caps
   return /^(klar|färdig|slut|det var allt|inga fler|stopp|jag är klar|det är klar|nu är jag klar)$/i.test(cleaned) ||
-         /\b(klar|färdig|slut)\b/i.test(cleaned);
+         /\b(klar|färdig|slut)\b/i.test(cleaned) ||
+         text === 'klar' || text === 'KLAR';
 }
 
 /**
@@ -133,6 +134,66 @@ export function wantsToAddMore(transcription: string): boolean {
  */
 export function isConfirmation(transcription: string): boolean {
   const text = transcription.toLowerCase().trim();
-  return /^(ja|japp|visst|ok|okej|bra|absolut|självklart)$/i.test(text);
+  // Remove punctuation for better matching
+  const cleaned = text.replace(/[!?.]/g, '').trim();
+  
+  return /^(ja|japp|visst|ok|okej|bra|absolut|självklart)$/i.test(cleaned) ||
+         /\b(ja|japp|visst|ok|okej|bra|absolut|självklart)\b/i.test(cleaned) ||
+         /jag vill se resultatet/i.test(cleaned) ||
+         /vill se/i.test(cleaned);
+}
+
+/**
+ * Parse painting tasks from transcription using Whisper-EP methodology
+ */
+export function parsePaintingTasks(transcription: string): string[] {
+  // Import the enhanced Whisper-EP parser
+  try {
+    const { parsePaintingTasksWithWhisperEP } = require('../whisper-ep/integration');
+    return parsePaintingTasksWithWhisperEP(transcription);
+  } catch (error) {
+    console.warn('Whisper-EP integration not available, using fallback parser');
+    return parsePaintingTasksFallback(transcription);
+  }
+}
+
+/**
+ * Fallback parser for when Whisper-EP is not available
+ */
+function parsePaintingTasksFallback(transcription: string): string[] {
+  const text = transcription.toLowerCase();
+  const tasks: string[] = [];
+  
+  // Common Swedish painting task patterns (ordered by specificity)
+  const taskPatterns = [
+    { pattern: /grundmåla(tak|taket)/gi, task: 'grundmåla tak' },
+    { pattern: /grundmåla\s+(?!tak)/gi, task: 'grundmåla' }, // Exclude "tak" from general grundmåla
+    { pattern: /målarbänka/gi, task: 'måla bänk' },
+    { pattern: /måla\s+(väggar?|vägg|bäggar)/gi, task: 'måla väggar' }, // Include common mispronunciation
+    { pattern: /måla\s+(tak)/gi, task: 'måla tak' },
+    { pattern: /måla\s+(golv)/gi, task: 'måla golv' },
+    { pattern: /måla\s+(dörrar?|dörr)/gi, task: 'måla dörrar' },
+    { pattern: /måla\s+(fönster|fönsterramar?)/gi, task: 'måla fönster' },
+    { pattern: /måla\s+(lister?|golvlister?|taklister?)/gi, task: 'måla lister' },
+    { pattern: /måla\s+(radiatorer?)/gi, task: 'måla radiatorer' },
+    { pattern: /spackla\s+(\w+)/gi, task: 'spackla' },
+    { pattern: /tapetsera/gi, task: 'tapetsera' },
+    { pattern: /struk/gi, task: 'struk' },
+  ];
+  
+  for (const { pattern, task } of taskPatterns) {
+    if (pattern.test(text)) {
+      tasks.push(task);
+    }
+  }
+  
+  // Extract layer information if mentioned
+  const layerMatch = text.match(/(\d+)\s+(lager|skikt|gånger)/i);
+  if (layerMatch && tasks.length > 0) {
+    const layers = parseInt(layerMatch[1]);
+    return tasks.map(task => `${task} (${layers} lager)`);
+  }
+  
+  return tasks;
 }
 

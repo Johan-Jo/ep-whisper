@@ -149,10 +149,10 @@ function addLineItemsTables(
     // Table data
     const tableData = items.map((item) => [
       item.meps_id || '',
-      item.task_name_sv,
-      formatUnit(item.quantity, item.unit),
-      formatSwedishCurrency(item.unitPrice, false),
-      formatSwedishCurrency(item.lineTotal, false),
+      item.name || 'Okänd uppgift',
+      formatUnit(item.qty, item.unit),
+      formatSwedishCurrency(item.unit_price, false),
+      formatSwedishCurrency(item.subtotal, false),
     ]);
 
     // Draw table
@@ -184,7 +184,7 @@ function addLineItemsTables(
     currentY = (doc as any).lastAutoTable.finalY + 5;
 
     // Section subtotal
-    const sectionTotal = items.reduce((sum, item) => sum + item.lineTotal, 0);
+    const sectionTotal = items.reduce((sum, item) => sum + item.subtotal, 0);
     doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
     doc.text(
@@ -220,11 +220,11 @@ function addTotals(
 
   // Calculate labor and material totals
   const laborTotal = data.lineItems.reduce(
-    (sum, item) => sum + (item.quantity * item.laborNormPerUnit * 450), // Assuming 450 SEK/h
+    (sum, item) => sum + (item.qty * 0.5 * 450), // Assuming 0.5h per unit and 450 SEK/h
     0
   );
   const materialTotal = data.lineItems.reduce(
-    (sum, item) => sum + (item.quantity * (item.materialPricePerUnit || 0)),
+    (sum, item) => sum + (item.qty * (item.unit_price * 0.3)), // Assuming 30% material cost
     0
   );
 
@@ -300,7 +300,7 @@ function groupLineItemsBySection(lineItems: LineItem[]): Record<string, LineItem
   };
 
   lineItems.forEach((item) => {
-    const taskLower = item.task_name_sv.toLowerCase();
+    const taskLower = (item.name || '').toLowerCase();
     
     if (taskLower.includes('täck') || taskLower.includes('maskera') || 
         taskLower.includes('flytta') || taskLower.includes('spackla') ||
