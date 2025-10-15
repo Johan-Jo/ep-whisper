@@ -652,7 +652,6 @@ ${summary.tasks.map((t, i) => `  ${i + 1}. ${t}`).join('\n')}
                   <p className="text-sm mt-2">Fill in room dimensions and click "Generate Estimate"</p>
                 </div>
               )}
-            </div>
           </div>
 
           {/* Information Panel */}
