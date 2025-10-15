@@ -59,31 +59,40 @@ export function ConversationalVoice({ onComplete }: ConversationalVoiceProps) {
         
         // Common female voice names in different browsers/OS
         const femaleNames = ['female', 'zira', 'alva', 'klara', 'astrid', 'woman', 'girl', 'fiona', 'samantha', 'karen', 'tessa', 'moira', 'rishi'];
+        const maleNames = ['male', 'bengt', 'oskar', 'erik', 'david', 'mark', 'daniel'];
         
         const isFemaleName = (name: string) => {
           const lower = name.toLowerCase();
+          // Explicitly exclude male voices
+          if (maleNames.some(mn => lower.includes(mn))) return false;
           return femaleNames.some(fn => lower.includes(fn));
         };
         
-        // Find best Swedish voice
+        // Find best Swedish voice (prioritize Microsoft Zira if available)
+        const microsoftZira = voices.find(voice => voice.name.includes('Zira'));
         const swedishFemaleVoice = voices.find(voice => 
           voice.lang.startsWith('sv') && isFemaleName(voice.name)
         );
-        const swedishVoice = voices.find(voice => voice.lang.startsWith('sv'));
+        const anySwedishNotMale = voices.find(voice => 
+          voice.lang.startsWith('sv') && !maleNames.some(mn => voice.name.toLowerCase().includes(mn))
+        );
         const anyFemaleVoice = voices.find(voice => isFemaleName(voice.name));
         
-        // Prioritize: Swedish female > Swedish any > any female > default
-        if (swedishFemaleVoice) {
-          console.log('Selected voice:', swedishFemaleVoice.name);
+        // Prioritize: Microsoft Zira > Swedish female > Swedish not-male > any female > default
+        if (microsoftZira) {
+          console.log('✅ Selected voice: Microsoft Zira (Swedish female)');
+          utterance.voice = microsoftZira;
+        } else if (swedishFemaleVoice) {
+          console.log('✅ Selected voice:', swedishFemaleVoice.name);
           utterance.voice = swedishFemaleVoice;
-        } else if (swedishVoice) {
-          console.log('Selected Swedish voice (not specifically female):', swedishVoice.name);
-          utterance.voice = swedishVoice;
+        } else if (anySwedishNotMale) {
+          console.log('⚠️ Selected Swedish voice (excluding male):', anySwedishNotMale.name);
+          utterance.voice = anySwedishNotMale;
         } else if (anyFemaleVoice) {
-          console.log('Selected female voice (non-Swedish):', anyFemaleVoice.name);
+          console.log('⚠️ Selected female voice (non-Swedish):', anyFemaleVoice.name);
           utterance.voice = anyFemaleVoice;
         } else {
-          console.log('Using default voice');
+          console.log('❌ Using default voice (no female voice found)');
         }
         
         window.speechSynthesis.speak(utterance);
