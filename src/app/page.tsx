@@ -190,9 +190,11 @@ export default function Home() {
                         {result.success ? '✓ Framgång' : '✗ Fel'}
                       </span>
                     </div>
-                    <p className="text-sm text-white">"{result.transcription.text}"</p>
+                    <p className="text-sm text-white">
+                      "{result.transcription?.text || 'Ingen transkription'}"
+                    </p>
                     <div className="flex items-center space-x-3 mt-2 text-xs text-gray-400">
-                      <span>Förtroende: {(result.transcription.confidence * 100).toFixed(0)}%</span>
+                      <span>Förtroende: {((result.transcription?.confidence || 0) * 100).toFixed(0)}%</span>
                       <span>Tid: {result.processingTime}ms</span>
                     </div>
                   </div>
