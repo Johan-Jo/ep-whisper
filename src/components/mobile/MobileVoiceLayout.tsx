@@ -22,9 +22,11 @@ interface MobileVoiceLayoutProps {
     };
     tasks: string[];
   }) => void;
+  estimate?: string;
+  isGeneratingEstimate?: boolean;
 }
 
-export function MobileVoiceLayout({ onComplete }: MobileVoiceLayoutProps) {
+export function MobileVoiceLayout({ onComplete, estimate, isGeneratingEstimate }: MobileVoiceLayoutProps) {
   const [manager] = useState(() => new ConversationManager());
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
   const [completedSteps, setCompletedSteps] = useState<ConversationStep[]>([]);
@@ -293,6 +295,31 @@ export function MobileVoiceLayout({ onComplete }: MobileVoiceLayoutProps) {
             </div>
           </div>
         )}
+        
+        {/* Estimate Display */}
+        {isGeneratingEstimate && (
+          <div className="mobile-live-transcript">
+            <div className="mobile-transcript-bubble">
+              <p className="mobile-transcript-label">💰 Genererar offert...</p>
+              <div className="mobile-loading-indicator">
+                <span className="mobile-loading-dot" />
+                <span className="mobile-loading-dot" />
+                <span className="mobile-loading-dot" />
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {estimate && !isGeneratingEstimate && (
+          <div className="mobile-live-transcript">
+            <div className="mobile-transcript-bubble">
+              <p className="mobile-transcript-label">✅ Offert klar!</p>
+              <div className="mobile-estimate-content">
+                <pre className="mobile-estimate-text">{estimate}</pre>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
       
       {/* Footer with Hold-to-Talk Button */}
@@ -302,7 +329,7 @@ export function MobileVoiceLayout({ onComplete }: MobileVoiceLayoutProps) {
           onStopRecording={handleStopRecording}
           isRecording={isRecording}
           isProcessing={isProcessing}
-          disabled={manager.isComplete()}
+          disabled={manager.isComplete() || isGeneratingEstimate}
         />
       </div>
       
@@ -374,6 +401,44 @@ export function MobileVoiceLayout({ onComplete }: MobileVoiceLayoutProps) {
           border-radius: 16px;
           padding: 16px;
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        }
+        
+        .mobile-loading-indicator {
+          display: flex;
+          gap: 8px;
+          justify-content: center;
+          margin-top: 12px;
+        }
+        
+        .mobile-loading-dot {
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          background-color: #BFFF00;
+          animation: pulse 1.4s ease-in-out infinite both;
+        }
+        
+        .mobile-loading-dot:nth-child(1) {
+          animation-delay: -0.32s;
+        }
+        
+        .mobile-loading-dot:nth-child(2) {
+          animation-delay: -0.16s;
+        }
+        
+        .mobile-estimate-content {
+          margin-top: 12px;
+          max-height: 200px;
+          overflow-y: auto;
+        }
+        
+        .mobile-estimate-text {
+          color: #BFFF00;
+          font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+          font-size: 12px;
+          line-height: 1.4;
+          white-space: pre-wrap;
+          margin: 0;
         }
         
         .mobile-transcript-label {

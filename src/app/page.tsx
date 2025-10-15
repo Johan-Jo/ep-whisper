@@ -295,7 +295,11 @@ ${summary.tasks.map((t, i) => `  ${i + 1}. ${t}`).join('\n')}
 
         {/* Mobile UI Mode */}
         {useMobileUI ? (
-          <MobileVoiceLayout onComplete={handleConversationComplete} />
+          <MobileVoiceLayout 
+            onComplete={handleConversationComplete}
+            estimate={voiceEstimate}
+            isGeneratingEstimate={voiceEstimateLoading}
+          />
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Input Panel */}
