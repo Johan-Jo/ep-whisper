@@ -26,7 +26,7 @@ export function VoiceConfirmation({
         <div className="mobile-confirmation-content">
           <div className="mobile-transcription-display">
             <p className="mobile-transcription-label">Du sa:</p>
-            <p className="mobile-transcription-text">"{transcription}"</p>
+            <p className="mobile-transcription-text">&quot;{transcription}&quot;</p>
           </div>
         </div>
         

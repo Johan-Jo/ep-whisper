@@ -153,7 +153,6 @@ export default function Home() {
       // Process all tasks
       console.log('🔍 Processing tasks:', summary.tasks);
       let allMappedTasks: LineItem[] = [];
-      let fullTranscription = summary.tasks.join('. ');
       
       for (const task of summary.tasks) {
         console.log('📝 Processing task:', task);
@@ -639,7 +638,7 @@ ${summary.tasks.map((t, i) => `  ${i + 1}. ${t}`).join('\n')}
                       </span>
                     </div>
                     <p className="text-sm text-white">
-                      "{result.transcription?.text || 'Ingen transkription'}"
+                      &quot;{result.transcription?.text || 'Ingen transkription'}&quot;
                     </p>
                     <div className="flex items-center space-x-3 mt-2 text-xs text-gray-400">
                       <span>Förtroende: {((result.transcription?.confidence || 0) * 100).toFixed(0)}%</span>
@@ -693,8 +692,8 @@ ${summary.tasks.map((t, i) => `  ${i + 1}. ${t}`).join('\n')}
                 </div>
               ) : (
                 <div className="text-center text-gray-500 py-12">
-                  <p className="text-lg">Fyll i rumsmått och klicka på "Skapa offert"</p>
-                  <p className="text-sm mt-2">Fill in room dimensions and click "Generate Estimate"</p>
+                  <p className="text-lg">Fyll i rumsmått och klicka på &quot;Skapa offert&quot;</p>
+                  <p className="text-sm mt-2">Fill in room dimensions and click &quot;Generate Estimate&quot;</p>
                 </div>
               )}
           </div>

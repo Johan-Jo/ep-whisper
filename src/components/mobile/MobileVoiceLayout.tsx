@@ -35,7 +35,7 @@ export function MobileVoiceLayout({ onComplete, estimate, isGeneratingEstimate }
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentStep, setCurrentStep] = useState<ConversationStep>('client_name');
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
-  const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
+  // Removed unused audioChunks state
   const [liveTranscript, setLiveTranscript] = useState<string>('');
   const [pendingTranscription, setPendingTranscription] = useState<string>('');
   const [showConfirmation, setShowConfirmation] = useState<boolean>(false);
@@ -243,7 +243,7 @@ export function MobileVoiceLayout({ onComplete, estimate, isGeneratingEstimate }
       
       // Add completed step
       if (response.success) {
-        setCompletedSteps(prev => {
+        setCompletedSteps(() => {
           const steps: ConversationStep[] = ['client_name', 'project_name', 'room_measurements', 'tasks', 'confirmation', 'complete'];
           const currentIndex = steps.indexOf(newStep);
           return steps.slice(0, currentIndex);

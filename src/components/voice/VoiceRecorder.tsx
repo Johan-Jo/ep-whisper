@@ -207,7 +207,7 @@ export function VoiceRecorder({
             Senaste transkription:
           </div>
           <div className="text-lg font-mono">
-            "{lastTranscription}"
+            &quot;{lastTranscription}&quot;
           </div>
           <div className="text-xs text-gray-500 mt-1">
             Förtroende: {(lastConfidence * 100).toFixed(1)}%

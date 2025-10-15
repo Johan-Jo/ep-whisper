@@ -82,7 +82,7 @@ function findTaskByPhrase(phrase: string) {
   );
 }
 
-function calculateQuantity(surfaceType: string, calculation: any): number {
+function calculateQuantity(surfaceType: string, calculation: RoomCalculation): number {
   switch (surfaceType) {
     case 'vägg':
       return calculation.walls_net;
@@ -95,7 +95,7 @@ function calculateQuantity(surfaceType: string, calculation: any): number {
   }
 }
 
-function calculateLineItem(task: any, quantity: number, layers: number) {
+function calculateLineItem(task: MepsRow, quantity: number, layers: number) {
   const laborHours = task.labor_norm_per_unit * quantity;
   const materialAmount = task.material_factor_per_unit * quantity;
   const laborCost = laborHours * task.price_labor_per_hour;
@@ -129,7 +129,7 @@ export async function POST(request: Request) {
     const calculation = calculateRoom(body.geometry);
 
     // Map tasks and calculate line items
-    const lineItems: any[] = [];
+    const lineItems: LineItem[] = [];
     const unmappedTasks: string[] = [];
 
     for (const taskInput of body.tasks) {

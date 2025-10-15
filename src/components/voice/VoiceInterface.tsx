@@ -139,7 +139,7 @@ export function VoiceInterface({
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="text-sm font-mono">
-                      "{result.transcription.text}"
+                      &quot;{result.transcription.text}&quot;
                     </div>
                     <div className="text-xs text-gray-500 mt-1">
                       Förtroende: {(result.transcription.confidence * 100).toFixed(1)}% | 
@@ -164,9 +164,9 @@ export function VoiceInterface({
         </h4>
         <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
           <li>• Prata tydligt och i normal hastighet</li>
-          <li>• Använd svenska ord för målning: "bredspackla", "grundmåla", "täckmåla"</li>
-          <li>• Nämn ytor: "väggar", "tak", "golv", "dörrar", "fönster"</li>
-          <li>• Använd svenska decimaler: "5,2 kvadratmeter" (inte "5.2")</li>
+          <li>• Använd svenska ord för målning: &quot;bredspackla&quot;, &quot;grundmåla&quot;, &quot;täckmåla&quot;</li>
+          <li>• Nämn ytor: &quot;väggar&quot;, &quot;tak&quot;, &quot;golv&quot;, &quot;dörrar&quot;, &quot;fönster&quot;</li>
+          <li>• Använd svenska decimaler: &quot;5,2 kvadratmeter&quot; (inte &quot;5.2&quot;)</li>
           <li>• VAD (Voice Activity Detection) kan automatiskt detektera när du pratar</li>
         </ul>
       </div>
