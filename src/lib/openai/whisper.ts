@@ -59,13 +59,32 @@ export async function transcribeAudio(
       console.log(`[Attempt ${attempt}] Audio format detected: ${audioFormat.mimeType}, size: ${buffer.length} bytes`);
       console.log(`[Attempt ${attempt}] Buffer header: ${buffer.toString('hex', 0, Math.min(16, buffer.length))}`);
       
+      // Validate audio format before creating File object
+      if (!audioFormat.mimeType || !audioFormat.extension) {
+        throw new OpenAIError(
+          `Unsupported audio format: ${audioFormat.mimeType}`,
+          400,
+          'UNSUPPORTED_AUDIO_FORMAT'
+        );
+      }
+      
       const audioFile = new File([buffer], `audio.${audioFormat.extension}`, { type: audioFormat.mimeType });
+      
+      // Additional validation
+      console.log(`[Attempt ${attempt}] File object created:`, {
+        name: audioFile.name,
+        type: audioFile.type,
+        size: audioFile.size
+      });
 
       console.log(`[Attempt ${attempt}] Sending to Whisper API with model: ${WHISPER_CONFIG.model}, language: ${WHISPER_CONFIG.language}`);
       
       let response;
       try {
-        response = await openai.client.audio.transcriptions.create({
+        console.log(`[Attempt ${attempt}] Making API call with timeout...`);
+        
+        // Add timeout to prevent hanging
+        const apiCallPromise = openai.client.audio.transcriptions.create({
           file: audioFile,
           model: WHISPER_CONFIG.model,
           language: WHISPER_CONFIG.language,
@@ -74,15 +93,35 @@ export async function transcribeAudio(
           timestamp_granularities: opts.includeSegments ? ['segment'] : undefined,
           prompt: "Detta är en svensk konversation om målning. Vanliga ord: måla, väggar, tak, dörrar, fönster, lager, gånger, bredd, längd, höjd, kund, projekt, rum, mått, uppgifter, målarbänka, grundmåla.", // Swedish context prompt
         });
+        
+        // Add 30-second timeout
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('API call timeout after 30 seconds')), 30000)
+        );
+        
+        response = await Promise.race([apiCallPromise, timeoutPromise]);
+        console.log(`[Attempt ${attempt}] API call completed successfully`);
       } catch (apiError: any) {
-        console.error(`[Attempt ${attempt}] OpenAI API Error:`, {
-          message: apiError?.message || 'Unknown error',
-          status: apiError?.status,
-          type: apiError?.type,
-          code: apiError?.code,
-          error: apiError?.error,
-          fullError: JSON.stringify(apiError, null, 2)
-        });
+        console.error(`[Attempt ${attempt}] OpenAI API Error:`, apiError);
+        
+        // More detailed error logging
+        if (apiError && typeof apiError === 'object') {
+          console.error(`[Attempt ${attempt}] Error properties:`, Object.keys(apiError));
+          console.error(`[Attempt ${attempt}] Error message:`, apiError.message);
+          console.error(`[Attempt ${attempt}] Error status:`, apiError.status);
+          console.error(`[Attempt ${attempt}] Error type:`, apiError.type);
+          console.error(`[Attempt ${attempt}] Error code:`, apiError.code);
+          
+          // Try to stringify the error
+          try {
+            console.error(`[Attempt ${attempt}] Full error JSON:`, JSON.stringify(apiError, null, 2));
+          } catch (stringifyError) {
+            console.error(`[Attempt ${attempt}] Could not stringify error:`, stringifyError);
+            console.error(`[Attempt ${attempt}] Error toString:`, apiError.toString());
+          }
+        } else {
+          console.error(`[Attempt ${attempt}] Error is not an object:`, typeof apiError, apiError);
+        }
         throw new OpenAIError(
           apiError?.message || apiError?.error?.message || 'OpenAI API call failed',
           apiError?.status || 500,
