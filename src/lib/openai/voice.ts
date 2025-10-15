@@ -1,6 +1,7 @@
 import { transcribeAudio, TranscriptionResult, validateAudioBuffer } from './whisper';
 import { generateTTS, generateConfirmation, TTSResult, preloadCommonConfirmations } from './tts';
 import { SWEDISH_CONFIRMATIONS, VAD_CONFIG, OpenAIError } from './client';
+import { perfMonitor } from '../monitoring/performance';
 
 export interface VoiceProcessingResult {
   transcription: TranscriptionResult;
@@ -31,12 +32,17 @@ export async function processVoiceInput(
   audioBuffer: Buffer | ArrayBuffer,
   options: VoiceProcessingOptions = {}
 ): Promise<VoiceProcessingResult> {
+  perfMonitor.reset(); // Reset for new voice interaction
+  perfMonitor.start('voice.processInput', { bufferSize: audioBuffer.byteLength });
+  
   const startTime = Date.now();
   const opts = { ...DEFAULT_OPTIONS, ...options };
 
   try {
     // Validate audio input
+    perfMonitor.start('voice.validateAudio');
     validateAudioBuffer(audioBuffer);
+    perfMonitor.end('voice.validateAudio');
 
     // Step 1: Transcribe audio to Swedish text
     const transcription = await transcribeAudio(audioBuffer, {
@@ -69,6 +75,9 @@ export async function processVoiceInput(
     }
 
     const processingTime = Date.now() - startTime;
+    
+    perfMonitor.end('voice.processInput', { success: true, transcribedText: transcription.text });
+    perfMonitor.logReport(); // Log performance report to console
 
     return {
       transcription,

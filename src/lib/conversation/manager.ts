@@ -12,6 +12,7 @@ import {
   isConfirmation,
   parsePaintingTasks 
 } from './parser';
+import { perfMonitor } from '../monitoring/performance';
 
 export class ConversationManager {
   private state: ConversationState;
@@ -46,9 +47,12 @@ export class ConversationManager {
     nextPrompt?: string;
     error?: string;
   } {
+    perfMonitor.start('conversation.process', { step: this.state.step });
+    
     const text = transcription.trim();
     
     if (!text) {
+      perfMonitor.end('conversation.process', { success: false, error: 'Empty transcription' });
       return {
         success: false,
         message: 'Jag hörde inget. Försök igen.',
@@ -56,9 +60,15 @@ export class ConversationManager {
       };
     }
     
+    perfMonitor.start(`conversation.handle_${this.state.step}`);
+    
+    let result;
     switch (this.state.step) {
       case 'client_name':
-        return this.handleClientName(text);
+        result = this.handleClientName(text);
+        perfMonitor.end(`conversation.handle_${this.state.step}`);
+        perfMonitor.end('conversation.process', { success: result.success, newStep: this.state.step });
+        return result;
       
       case 'project_name':
         return this.handleProjectName(text);

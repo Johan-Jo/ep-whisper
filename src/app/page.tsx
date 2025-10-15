@@ -10,6 +10,7 @@ import type { RoomCalculation, MepsRow, LineItem } from '@/lib/types';
 import { MepsCatalog } from '@/lib/excel/catalog';
 import { PDFExportButton } from '@/components/estimate/PDFExportButton';
 import type { PDFEstimateData } from '@/lib/pdf/types';
+import { PerformancePanel } from '@/components/monitoring/PerformancePanel';
 import '../styles/mobile.css';
 
 export default function Home() {
@@ -712,6 +713,9 @@ ${summary.tasks.map((t, i) => `  ${i + 1}. ${t}`).join('\n')}
         </div>
         )}
       </div>
+      
+      {/* Performance Monitoring Panel */}
+      <PerformancePanel />
     </div>
   );
 }

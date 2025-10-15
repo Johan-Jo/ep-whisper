@@ -1,5 +1,6 @@
 import { openai, WHISPER_CONFIG, VAD_CONFIG, OpenAIError } from './client';
 import { fixSwedishTranscription, validateSwedishPaintingTranscription } from '../nlp/transcription-fixes';
+import { perfMonitor } from '../monitoring/performance';
 
 export interface TranscriptionResult {
   text: string;
@@ -35,10 +36,13 @@ export async function transcribeAudio(
   audioBuffer: Buffer | ArrayBuffer,
   options: TranscriptionOptions = {}
 ): Promise<TranscriptionResult> {
+  perfMonitor.start('whisper.transcribe', { attempt: 1, bufferSize: audioBuffer.byteLength });
+  
   const opts = { ...DEFAULT_OPTIONS, ...options };
   let lastError: Error | null = null;
 
   for (let attempt = 1; attempt <= opts.maxRetries; attempt++) {
+    perfMonitor.start(`whisper.attempt_${attempt}`);
     try {
       // Convert ArrayBuffer to Buffer if needed
       const buffer = audioBuffer instanceof ArrayBuffer 
@@ -81,6 +85,7 @@ export async function transcribeAudio(
       
       let response;
       try {
+        perfMonitor.start('whisper.api_call');
         console.log(`[Attempt ${attempt}] Making API call with timeout...`);
         
         // Add timeout to prevent hanging
@@ -100,6 +105,7 @@ export async function transcribeAudio(
         );
         
         response = await Promise.race([apiCallPromise, timeoutPromise]);
+        perfMonitor.end('whisper.api_call', { success: true });
         console.log(`[Attempt ${attempt}] API call completed successfully`);
       } catch (apiError: any) {
         console.error(`[Attempt ${attempt}] OpenAI API Error:`, apiError);
@@ -152,6 +158,9 @@ export async function transcribeAudio(
         console.warn(`Low confidence transcription: ${(confidence * 100).toFixed(1)}% - proceeding anyway`);
       }
 
+      perfMonitor.end(`whisper.attempt_${attempt}`, { success: true });
+      perfMonitor.end('whisper.transcribe', { success: true, text: fixedText });
+      
       return {
         text: normalizeSwedishText(fixedText),
         confidence: Math.max(confidence, validation.confidence), // Use higher confidence

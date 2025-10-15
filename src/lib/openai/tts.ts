@@ -1,4 +1,5 @@
 import { openai, TTS_CONFIG, SWEDISH_CONFIRMATIONS, OpenAIError } from './client';
+import { perfMonitor } from '../monitoring/performance';
 
 export interface TTSResult {
   audioBuffer: ArrayBuffer;
@@ -28,6 +29,7 @@ export async function generateTTS(
   text: string,
   options: TTSOptions = {}
 ): Promise<TTSResult> {
+  perfMonitor.start('tts.generate', { textLength: text.length });
   const opts = { ...DEFAULT_OPTIONS, ...options };
 
   try {
@@ -37,6 +39,7 @@ export async function generateTTS(
       throw new OpenAIError('Text cannot be empty', 400, 'EMPTY_TEXT');
     }
 
+    perfMonitor.start('tts.api_call');
     const response = await openai.audio.speech.create({
       model: TTS_CONFIG.model,
       voice: opts.voice,
@@ -47,10 +50,13 @@ export async function generateTTS(
 
     // Convert response to ArrayBuffer
     const audioBuffer = await response.arrayBuffer();
+    perfMonitor.end('tts.api_call', { success: true, bufferSize: audioBuffer.byteLength });
     
     // Estimate duration (rough calculation: ~150 words per minute)
     const wordCount = normalizedText.split(/\s+/).length;
     const estimatedDuration = (wordCount / 150) * 60 * 1000; // milliseconds
+
+    perfMonitor.end('tts.generate', { success: true, wordCount });
 
     return {
       audioBuffer,
