@@ -56,6 +56,15 @@ export class MepsCatalog {
   }
 
   /**
+   * Load catalog from array of MepsRow objects (for testing/demo)
+   */
+  async loadFromRows(rows: MepsRow[]): Promise<void> {
+    this.indexTasks(rows);
+    this.filePath = null;
+    this.lastUpdated = new Date();
+  }
+
+  /**
    * Index tasks for fast lookup
    */
   private indexTasks(tasks: MepsRow[]): void {

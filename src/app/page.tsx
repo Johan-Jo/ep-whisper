@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { VoiceInterface } from '@/components/voice';
 import type { VoiceProcessingResult } from '@/lib/openai';
 import { generateEstimateFromVoice, formatVoiceEstimateResult } from '@/lib/nlp';
-import type { RoomCalculation } from '@/lib/types';
+import type { RoomCalculation, MepsRow } from '@/lib/types';
+import { MepsCatalog } from '@/lib/excel/catalog';
 
 export default function Home() {
   const [width, setWidth] = useState('4');
@@ -213,45 +214,55 @@ export default function Home() {
                     setVoiceEstimateLoading(true);
                     try {
                       // Create mock MEPS catalog for demo (in real app, this would come from Excel)
-                      const mockMepsCatalog = [
+                      const mockMepsRows: MepsRow[] = [
                         {
+                          meps_id: 'MÅL-VÄGG-M2',
                           meps_code: 'MÅL-VÄGG-M2',
                           task_name: 'Måla väggar',
                           surface_type: 'vägg' as const,
                           unit: 'm2' as const,
                           unit_price_sek: 45,
                           default_layers: '2',
-                          material_factor_per_unit: '1.2'
+                          material_factor_per_unit: '1.2',
+                          synonyms: 'måla väggar;måla vägg;väggmålning;måla väggarna'
                         },
                         {
+                          meps_id: 'MÅL-TAK-M2',
                           meps_code: 'MÅL-TAK-M2',
                           task_name: 'Måla tak',
                           surface_type: 'tak' as const,
                           unit: 'm2' as const,
                           unit_price_sek: 50,
                           default_layers: '2',
-                          material_factor_per_unit: '1.2'
+                          material_factor_per_unit: '1.2',
+                          synonyms: 'måla tak;måla taket;takmålning'
                         },
                         {
+                          meps_id: 'SPACK-VÄGG-M2',
                           meps_code: 'SPACK-VÄGG-M2',
                           task_name: 'Spackla väggar',
                           surface_type: 'vägg' as const,
                           unit: 'm2' as const,
                           unit_price_sek: 25,
                           default_layers: '1',
-                          material_factor_per_unit: '0.8'
+                          material_factor_per_unit: '0.8',
+                          synonyms: 'spackla väggar;spackla vägg;väggspackling;spackla väggarna'
                         }
                       ];
+                      
+                      // Create catalog instance
+                      const catalog = new MepsCatalog();
+                      await catalog.loadFromRows(mockMepsRows);
                       
                       const roomCalculation = generateRoomCalculation();
                       
                       console.log('📊 Room calculation:', roomCalculation);
-                      console.log('📋 MEPS catalog:', mockMepsCatalog);
+                      console.log('📋 MEPS catalog:', catalog);
                       
                       const estimateResult = await generateEstimateFromVoice({
                         transcription: result.transcription.text,
                         roomCalculation,
-                        mepsCatalog: mockMepsCatalog
+                        mepsCatalog: catalog
                       });
                       
                       console.log('✅ Estimate result:', estimateResult);

@@ -9,11 +9,12 @@ import { parseSwedishIntent, validateParsedIntent, formatParsedIntent, type Pars
 import { mapSpokenTaskToMeps, type TaskMapping } from '@/lib/pricing/mapper';
 import { type RoomCalculation, type MepsRow } from '@/lib/types';
 import { type VoiceProcessingResult } from '@/lib/openai';
+import { MepsCatalog } from '@/lib/excel/catalog';
 
 export interface VoiceEstimateRequest {
   transcription: string;
   roomCalculation: RoomCalculation;
-  mepsCatalog: MepsRow[];
+  mepsCatalog: MepsCatalog; // Changed from MepsRow[] to MepsCatalog
 }
 
 export interface VoiceEstimateResult {
@@ -62,9 +63,11 @@ export async function generateEstimateFromVoice(
       try {
         // Create a spoken task description for the mapper
         const spokenTask = createSpokenTaskDescription(task);
+        console.log('🔍 Mapping spoken task:', spokenTask);
         
         // Map to MEPS using existing mapper
         const mapping = mapSpokenTaskToMeps(spokenTask, request.mepsCatalog);
+        console.log('📋 Mapping result:', mapping);
         
         if (mapping) {
           // Adjust quantity based on parsed intent
@@ -73,9 +76,11 @@ export async function generateEstimateFromVoice(
           
           mappedTasks.push(mapping);
         } else {
+          console.warn('⚠️ Could not map task:', spokenTask);
           errors.push(`Could not map task: ${spokenTask}`);
         }
       } catch (error) {
+        console.error('❌ Error mapping task:', task, error);
         errors.push(`Error mapping task ${task.action} ${task.surface}: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     }
