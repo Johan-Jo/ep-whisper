@@ -60,8 +60,6 @@ export function parseMeasurements(transcription: string): {
   // Extract numbers (support both comma and period as decimal)
   const numbers = normalized.match(/\d+[.,]?\d*/g)?.map(n => parseFloat(n.replace(',', '.'))) || [];
   
-  console.log('parseMeasurements debug:', { text, normalized, numbers });
-  
   // Pattern 1: "X gånger Y gånger Z" or "X × Y × Z"
   if (text.includes('gånger') || text.includes('×') || text.includes('x')) {
     // Need at least 3 numbers, but sometimes same number appears twice (e.g., "tre gånger tre")
