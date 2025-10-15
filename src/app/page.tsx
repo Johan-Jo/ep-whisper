@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { VoiceInterface } from '@/components/voice';
+import { ConversationalVoice } from '@/components/voice/ConversationalVoice';
 import type { VoiceProcessingResult } from '@/lib/openai';
 import { generateEstimateFromVoice, formatVoiceEstimateResult } from '@/lib/nlp';
 import type { RoomCalculation, MepsRow, LineItem } from '@/lib/types';
@@ -22,12 +23,158 @@ export default function Home() {
   const [voiceEstimate, setVoiceEstimate] = useState<string>('');
   const [voiceEstimateLoading, setVoiceEstimateLoading] = useState(false);
   const [pdfData, setPdfData] = useState<PDFEstimateData | null>(null);
+  const [useConversationalMode, setUseConversationalMode] = useState(true);
 
   // Check API key status on mount
   useEffect(() => {
     const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY;
     setApiKeyStatus(apiKey ? 'present' : 'missing');
   }, []);
+  
+  // Handle conversation completion
+  const handleConversationComplete = async (summary: {
+    projectName: string;
+    roomName: string;
+    measurements: { width: number; length: number; height: number; doors?: number; windows?: number };
+    tasks: string[];
+  }) => {
+    console.log('✅ Conversation complete:', summary);
+    
+    // Update form fields
+    setWidth(String(summary.measurements.width));
+    setLength(String(summary.measurements.length));
+    setHeight(String(summary.measurements.height));
+    setDoors(String(summary.measurements.doors || 1));
+    setWindows(String(summary.measurements.windows || 1));
+    
+    // Generate estimate from conversation
+    setVoiceEstimateLoading(true);
+    try {
+      const mockMepsRows: MepsRow[] = [
+        {
+          meps_id: 'GRUND-VÄGG-M2',
+          task_name_sv: 'Grundmåla väggar',
+          unit: 'm2' as const,
+          labor_norm_per_unit: 0.4,
+          surface_type: 'vägg' as const,
+          default_layers: 1,
+          material_factor_per_unit: 1.0,
+          price_labor_per_hour: 450,
+          price_material_per_unit: 35,
+          synonyms: 'grundmåla väggar;grundmåla vägg;grundmålning väggar'
+        },
+        {
+          meps_id: 'MÅL-VÄGG-M2',
+          task_name_sv: 'Måla väggar',
+          unit: 'm2' as const,
+          labor_norm_per_unit: 0.5,
+          surface_type: 'vägg' as const,
+          default_layers: 2,
+          material_factor_per_unit: 1.2,
+          price_labor_per_hour: 450,
+          price_material_per_unit: 45,
+          synonyms: 'måla väggar;måla vägg;väggmålning;täckmåla väggar;täckmåla vägg'
+        },
+        {
+          meps_id: 'MÅL-TAK-M2',
+          task_name_sv: 'Måla tak',
+          unit: 'm2' as const,
+          labor_norm_per_unit: 0.45,
+          surface_type: 'tak' as const,
+          default_layers: 2,
+          material_factor_per_unit: 1.2,
+          price_labor_per_hour: 450,
+          price_material_per_unit: 50,
+          synonyms: 'måla tak;måla taket;takmålning;täckmåla tak'
+        },
+        {
+          meps_id: 'MÅL-DÖRR-ST',
+          task_name_sv: 'Måla dörr',
+          unit: 'st' as const,
+          labor_norm_per_unit: 2.5,
+          surface_type: 'dörr' as const,
+          default_layers: 2,
+          material_factor_per_unit: 0.5,
+          price_labor_per_hour: 450,
+          price_material_per_unit: 120,
+          synonyms: 'måla dörr;måla dörren;måla dörrar;dörrmålning'
+        }
+      ];
+      
+      const catalog = new MepsCatalog();
+      await catalog.loadFromRows(mockMepsRows);
+      
+      const roomCalculation: RoomCalculation = {
+        width: summary.measurements.width,
+        length: summary.measurements.length,
+        height: summary.measurements.height,
+        walls_gross: 2 * (summary.measurements.width + summary.measurements.length) * summary.measurements.height,
+        walls_net: 2 * (summary.measurements.width + summary.measurements.length) * summary.measurements.height - ((summary.measurements.doors || 1) * 1.89),
+        ceiling_gross: summary.measurements.width * summary.measurements.length,
+        ceiling_net: summary.measurements.width * summary.measurements.length,
+        floor_gross: summary.measurements.width * summary.measurements.length,
+        floor_net: summary.measurements.width * summary.measurements.length,
+        perimeter: 2 * (summary.measurements.width + summary.measurements.length),
+      };
+      
+      // Process all tasks
+      let allMappedTasks: LineItem[] = [];
+      let fullTranscription = summary.tasks.join('. ');
+      
+      for (const task of summary.tasks) {
+        const estimateResult = await generateEstimateFromVoice({
+          transcription: task,
+          roomCalculation,
+          mepsCatalog: catalog
+        });
+        
+        if (estimateResult.success && estimateResult.mappedTasks) {
+          allMappedTasks = [...allMappedTasks, ...estimateResult.mappedTasks];
+        }
+      }
+      
+      // Calculate totals
+      const subtotal = allMappedTasks.reduce((sum, item) => sum + item.lineTotal, 0);
+      const markup = subtotal * 0.15;
+      const total = subtotal + markup;
+      
+      // Format output
+      const formattedEstimate = `
+✅ ${summary.projectName} - ${summary.roomName}
+📊 Mått: ${summary.measurements.width}×${summary.measurements.length}×${summary.measurements.height}m
+
+📋 Uppgifter (${summary.tasks.length}):
+${summary.tasks.map((t, i) => `  ${i + 1}. ${t}`).join('\n')}
+
+💰 Uppskattning:
+  • Antal uppgifter: ${allMappedTasks.length}
+  • Delsumma: ${subtotal.toFixed(2)} SEK
+  • Pålägg (15%): ${markup.toFixed(2)} SEK
+  • Totalt: ${total.toFixed(2)} SEK
+      `.trim();
+      
+      setVoiceEstimate(formattedEstimate);
+      
+      // Prepare PDF data
+      const pdfEstimateData: PDFEstimateData = {
+        roomName: summary.roomName,
+        date: new Date(),
+        geometry: roomCalculation,
+        lineItems: allMappedTasks,
+        subtotal,
+        markup,
+        markupPercent: 15,
+        total,
+      };
+      setPdfData(pdfEstimateData);
+      
+    } catch (error) {
+      console.error('Error generating estimate:', error);
+      setVoiceEstimate(`❌ Fel: ${error instanceof Error ? error.message : 'Okänt fel'}`);
+    } finally {
+      setVoiceEstimateLoading(false);
+    }
+  };
 
   // Generate room calculation from current form values
   const generateRoomCalculation = (): RoomCalculation => {
@@ -201,8 +348,36 @@ export default function Home() {
                 </p>
               )}
             </div>
+            
+            {/* Mode Toggle */}
+            <div className="mb-6 flex items-center gap-4 p-3 bg-gray-900 rounded border border-gray-700">
+              <span className="text-sm text-gray-400">Röstläge:</span>
+              <button
+                onClick={() => setUseConversationalMode(true)}
+                className={`px-4 py-2 rounded text-sm font-medium transition-colors ${
+                  useConversationalMode 
+                    ? 'bg-lime-500 text-black' 
+                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                }`}
+              >
+                🗣️ Konversation (Steg-för-steg)
+              </button>
+              <button
+                onClick={() => setUseConversationalMode(false)}
+                className={`px-4 py-2 rounded text-sm font-medium transition-colors ${
+                  !useConversationalMode 
+                    ? 'bg-lime-500 text-black' 
+                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                }`}
+              >
+                🎤 Direkt (En kommando)
+              </button>
+            </div>
 
-              <VoiceInterface
+              {useConversationalMode ? (
+                <ConversationalVoice onComplete={handleConversationComplete} />
+              ) : (
+                <VoiceInterface
                 onTaskIdentified={async (result) => {
                   console.log('Voice result:', result);
                   setVoiceResults(prev => [result, ...prev].slice(0, 5)); // Keep last 5 results
@@ -364,6 +539,7 @@ export default function Home() {
                   console.error('Voice error:', error);
                 }}
               />
+              )}
 
             {/* Voice Results History */}
             {voiceResults.length > 0 && (

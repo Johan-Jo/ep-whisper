@@ -43,3 +43,4 @@ async function testTrainingCLI() {
 
 // Run the test
 testTrainingCLI();
+

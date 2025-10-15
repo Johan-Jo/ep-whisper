@@ -57,3 +57,4 @@ phrases.forEach((phrase, index) => {
 });
 
 console.log('🎉 Training data generation test completed successfully!');
+

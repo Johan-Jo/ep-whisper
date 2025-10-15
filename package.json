@@ -20,6 +20,8 @@
     "generate-training": "tsx scripts/generate-training-data.ts"
   },
   "dependencies": {
+    "jspdf": "^3.0.3",
+    "jspdf-autotable": "^5.0.2",
     "next": "15.5.5",
     "openai": "^6.3.0",
     "react": "19.1.0",

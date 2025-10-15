@@ -181,3 +181,4 @@ export function groupLineItemsBySection(lineItems: LineItem[], catalog: MepsCata
 
   return grouped;
 }
+

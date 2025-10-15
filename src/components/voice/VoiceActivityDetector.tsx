@@ -254,3 +254,4 @@ export function VoiceActivityDetector({
     </div>
   );
 }
+

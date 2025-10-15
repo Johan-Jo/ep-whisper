@@ -20,3 +20,4 @@ export type {
   PhraseTemplate,
   InflectionRule,
 } from './types';
+

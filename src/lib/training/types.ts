@@ -104,3 +104,4 @@ export interface GeneratedPhrase {
   template_used: string;
   variations: string[];
 }
+
