@@ -214,44 +214,104 @@ export default function Home() {
                     setVoiceEstimateLoading(true);
                     try {
                       // Create mock MEPS catalog for demo (in real app, this would come from Excel)
-                      const mockMepsRows: MepsRow[] = [
-                        {
-                          meps_id: 'MÅL-VÄGG-M2',
-                          task_name_sv: 'Måla väggar',
-                          unit: 'm2' as const,
-                          labor_norm_per_unit: 0.5,
-                          surface_type: 'vägg' as const,
-                          default_layers: 2,
-                          material_factor_per_unit: 1.2,
-                          price_labor_per_hour: 450,
-                          price_material_per_unit: 45,
-                          synonyms: 'måla väggar;måla vägg;väggmålning;måla väggarna'
-                        },
-                        {
-                          meps_id: 'MÅL-TAK-M2',
-                          task_name_sv: 'Måla tak',
-                          unit: 'm2' as const,
-                          labor_norm_per_unit: 0.6,
-                          surface_type: 'tak' as const,
-                          default_layers: 2,
-                          material_factor_per_unit: 1.2,
-                          price_labor_per_hour: 450,
-                          price_material_per_unit: 50,
-                          synonyms: 'måla tak;måla taket;takmålning'
-                        },
-                        {
-                          meps_id: 'SPACK-VÄGG-M2',
-                          task_name_sv: 'Spackla väggar',
-                          unit: 'm2' as const,
-                          labor_norm_per_unit: 0.3,
-                          surface_type: 'vägg' as const,
-                          default_layers: 1,
-                          material_factor_per_unit: 0.8,
-                          price_labor_per_hour: 450,
-                          price_material_per_unit: 25,
-                          synonyms: 'spackla väggar;spackla vägg;väggspackling;spackla väggarna'
-                        }
-                      ];
+                    const mockMepsRows: MepsRow[] = [
+                      {
+                        meps_id: 'GRUND-VÄGG-M2',
+                        task_name_sv: 'Grundmåla väggar',
+                        unit: 'm2' as const,
+                        labor_norm_per_unit: 0.4,
+                        surface_type: 'vägg' as const,
+                        default_layers: 1,
+                        material_factor_per_unit: 1.0,
+                        price_labor_per_hour: 450,
+                        price_material_per_unit: 35,
+                        synonyms: 'grundmåla väggar;grundmåla vägg;grundmåling vägg;grundmåla väggarna;primer väggar'
+                      },
+                      {
+                        meps_id: 'MÅL-VÄGG-M2',
+                        task_name_sv: 'Måla väggar',
+                        unit: 'm2' as const,
+                        labor_norm_per_unit: 0.5,
+                        surface_type: 'vägg' as const,
+                        default_layers: 2,
+                        material_factor_per_unit: 1.2,
+                        price_labor_per_hour: 450,
+                        price_material_per_unit: 45,
+                        synonyms: 'måla väggar;måla vägg;väggmålning;måla väggarna;täckmåla väggar;täckmåla vägg'
+                      },
+                      {
+                        meps_id: 'GRUND-TAK-M2',
+                        task_name_sv: 'Grundmåla tak',
+                        unit: 'm2' as const,
+                        labor_norm_per_unit: 0.5,
+                        surface_type: 'tak' as const,
+                        default_layers: 1,
+                        material_factor_per_unit: 1.0,
+                        price_labor_per_hour: 450,
+                        price_material_per_unit: 40,
+                        synonyms: 'grundmåla tak;grundmåla taket;grundmåling tak;primer tak'
+                      },
+                      {
+                        meps_id: 'MÅL-TAK-M2',
+                        task_name_sv: 'Måla tak',
+                        unit: 'm2' as const,
+                        labor_norm_per_unit: 0.6,
+                        surface_type: 'tak' as const,
+                        default_layers: 2,
+                        material_factor_per_unit: 1.2,
+                        price_labor_per_hour: 450,
+                        price_material_per_unit: 50,
+                        synonyms: 'måla tak;måla taket;takmålning;täckmåla tak;täckmåla taket'
+                      },
+                      {
+                        meps_id: 'SPACK-VÄGG-M2',
+                        task_name_sv: 'Spackla väggar',
+                        unit: 'm2' as const,
+                        labor_norm_per_unit: 0.3,
+                        surface_type: 'vägg' as const,
+                        default_layers: 1,
+                        material_factor_per_unit: 0.8,
+                        price_labor_per_hour: 450,
+                        price_material_per_unit: 25,
+                        synonyms: 'spackla väggar;spackla vägg;väggspackling;spackla väggarna;bredspackla väggar;bredspackla vägg'
+                      },
+                      {
+                        meps_id: 'MÅL-GOLV-M2',
+                        task_name_sv: 'Måla golv',
+                        unit: 'm2' as const,
+                        labor_norm_per_unit: 0.4,
+                        surface_type: 'golv' as const,
+                        default_layers: 2,
+                        material_factor_per_unit: 1.1,
+                        price_labor_per_hour: 450,
+                        price_material_per_unit: 48,
+                        synonyms: 'måla golv;måla golvet;golvmålning;täckmåla golv'
+                      },
+                      {
+                        meps_id: 'MÅL-DÖRR-ST',
+                        task_name_sv: 'Måla dörr',
+                        unit: 'st' as const,
+                        labor_norm_per_unit: 2.5,
+                        surface_type: 'dörr' as const,
+                        default_layers: 2,
+                        material_factor_per_unit: 0.5,
+                        price_labor_per_hour: 450,
+                        price_material_per_unit: 120,
+                        synonyms: 'måla dörr;måla dörren;måla dörrar;dörrmålning'
+                      },
+                      {
+                        meps_id: 'MÅL-LIST-LPM',
+                        task_name_sv: 'Måla lister',
+                        unit: 'lpm' as const,
+                        labor_norm_per_unit: 0.3,
+                        surface_type: 'list' as const,
+                        default_layers: 2,
+                        material_factor_per_unit: 0.2,
+                        price_labor_per_hour: 450,
+                        price_material_per_unit: 15,
+                        synonyms: 'måla lister;måla list;listmålning;måla listen;måla taklist;måla golvlist'
+                      }
+                    ];
                       
                       // Create catalog instance
                       const catalog = new MepsCatalog();
