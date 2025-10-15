@@ -57,9 +57,29 @@ export function ConversationalVoice({ onComplete }: ConversationalVoiceProps) {
   };
   
   const handleTranscription = async (result: any) => {
-    if (!result.transcription?.text) return;
+    // Check if transcription failed or is empty
+    if (!result.success || !result.transcription?.text) {
+      const errorMessage = 'Jag hörde inte vad du sa. Försök igen.';
+      setTranscript(prev => [...prev, `⚠️ ${errorMessage}`]);
+      await speak(errorMessage);
+      // Repeat the current question
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      await speak(currentPrompt);
+      return;
+    }
     
-    const userInput = result.transcription.text;
+    const userInput = result.transcription.text.trim();
+    
+    // Check if input is too short
+    if (userInput.length < 2) {
+      const errorMessage = 'Jag hörde inte tydligt. Kan du upprepa?';
+      setTranscript(prev => [...prev, `⚠️ ${errorMessage}`]);
+      await speak(errorMessage);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      await speak(currentPrompt);
+      return;
+    }
+    
     setTranscript(prev => [...prev, `Du: ${userInput}`]);
     
     // Process the input
@@ -152,7 +172,17 @@ export function ConversationalVoice({ onComplete }: ConversationalVoiceProps) {
       
       {/* Current Prompt */}
       <div className="bg-gray-900 rounded-lg p-4 border border-lime-500/30">
-        <div className="text-sm text-lime-400 mb-2">💬 Aktuell fråga:</div>
+        <div className="flex items-center justify-between mb-2">
+          <div className="text-sm text-lime-400">💬 Aktuell fråga:</div>
+          {hasStarted && (
+            <button
+              onClick={() => speak(currentPrompt)}
+              className="text-xs text-gray-400 hover:text-lime-400 transition-colors"
+            >
+              🔊 Upprepa
+            </button>
+          )}
+        </div>
         <div className="text-white">{currentPrompt}</div>
       </div>
       
