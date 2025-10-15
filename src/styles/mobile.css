@@ -1,0 +1,424 @@
+/**
+ * Mobile-First Voice Interface Styles
+ * Black & Lime Design System
+ */
+
+/* ============================================
+   CSS Variables - Color System
+   ============================================ */
+:root {
+  --color-black: #000000;
+  --color-lime: #BFFF00;
+  --color-near-black: #0A0A0A;
+  --color-dark-gray: #1A1A1A;
+  --color-medium-gray: #404040;
+  --color-white: #FFFFFF;
+  --color-error: #FF4444;
+  
+  /* Semantic colors */
+  --color-primary: var(--color-black);
+  --color-accent: var(--color-lime);
+  --color-background: var(--color-near-black);
+  --color-surface: var(--color-dark-gray);
+  --color-text-primary: var(--color-white);
+  --color-text-secondary: var(--color-lime);
+  --color-disabled: var(--color-medium-gray);
+  
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  
+  /* Typography */
+  --font-size-xs: 12px;
+  --font-size-sm: 14px;
+  --font-size-base: 18px;
+  --font-size-lg: 24px;
+  --font-size-xl: 32px;
+  --font-size-2xl: 40px;
+  
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-bold: 700;
+  
+  /* Touch targets */
+  --touch-target-min: 44px;
+  
+  /* Border radius */
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-full: 9999px;
+  
+  /* Shadows */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.5);
+  --shadow-lime: 0 0 20px rgba(191, 255, 0, 0.4);
+  
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-base: 250ms ease;
+  --transition-slow: 350ms ease;
+  
+  /* Z-index layers */
+  --z-base: 1;
+  --z-sticky: 10;
+  --z-fixed: 100;
+  --z-modal: 1000;
+  --z-toast: 2000;
+}
+
+/* ============================================
+   Mobile Base Styles
+   ============================================ */
+.mobile-app {
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  font-size: var(--font-size-base);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ============================================
+   Safe Area Support (iOS Notch)
+   ============================================ */
+.mobile-safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+.mobile-safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.mobile-safe-left {
+  padding-left: env(safe-area-inset-left);
+}
+
+.mobile-safe-right {
+  padding-right: env(safe-area-inset-right);
+}
+
+/* ============================================
+   Typography
+   ============================================ */
+.mobile-heading-xl {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-accent);
+  margin: 0;
+}
+
+.mobile-heading-lg {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-accent);
+  margin: 0;
+}
+
+.mobile-heading-md {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-white);
+  margin: 0;
+}
+
+.mobile-body {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-normal);
+  color: var(--color-white);
+}
+
+.mobile-caption {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-normal);
+  color: var(--color-medium-gray);
+}
+
+/* ============================================
+   Touch Optimizations
+   ============================================ */
+.mobile-touchable {
+  min-width: var(--touch-target-min);
+  min-height: var(--touch-target-min);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+/* Prevent text selection during holds */
+.mobile-no-select {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Prevent pull-to-refresh */
+.mobile-no-overscroll {
+  overscroll-behavior: none;
+  -webkit-overscroll-behavior: none;
+}
+
+/* Prevent zoom on double-tap */
+.mobile-no-zoom {
+  touch-action: pan-y;
+}
+
+/* ============================================
+   Layout Utilities
+   ============================================ */
+.mobile-full-height {
+  height: 100vh;
+  height: 100dvh; /* Dynamic viewport height for mobile */
+}
+
+.mobile-flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.mobile-flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ============================================
+   Animations
+   ============================================ */
+@keyframes mobile-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes mobile-pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(191, 255, 0, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(191, 255, 0, 0.8);
+  }
+}
+
+@keyframes mobile-slide-up {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes mobile-slide-down {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes mobile-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes mobile-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ============================================
+   Animation Utility Classes
+   ============================================ */
+.mobile-pulse {
+  animation: mobile-pulse 2s ease-in-out infinite;
+}
+
+.mobile-pulse-glow {
+  animation: mobile-pulse-glow 2s ease-in-out infinite;
+}
+
+.mobile-slide-up {
+  animation: mobile-slide-up var(--transition-base) ease-out;
+}
+
+.mobile-fade-in {
+  animation: mobile-fade-in var(--transition-base) ease-out;
+}
+
+.mobile-spin {
+  animation: mobile-spin 1s linear infinite;
+}
+
+/* ============================================
+   Button Styles
+   ============================================ */
+.mobile-button {
+  min-height: var(--touch-target-min);
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-button-primary {
+  background-color: var(--color-lime);
+  color: var(--color-black);
+}
+
+.mobile-button-primary:active {
+  transform: scale(0.98);
+  opacity: 0.9;
+}
+
+.mobile-button-secondary {
+  background-color: var(--color-black);
+  color: var(--color-lime);
+  border: 2px solid var(--color-lime);
+}
+
+.mobile-button-secondary:active {
+  transform: scale(0.98);
+  background-color: var(--color-dark-gray);
+}
+
+/* ============================================
+   Scroll Behavior
+   ============================================ */
+.mobile-scroll-smooth {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+.mobile-scroll-hidden {
+  overflow: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Hide scrollbars */
+.mobile-scrollbar-hidden::-webkit-scrollbar {
+  display: none;
+}
+
+.mobile-scrollbar-hidden {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ============================================
+   Accessibility
+   ============================================ */
+.mobile-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Focus visible for keyboard navigation */
+.mobile-touchable:focus-visible {
+  outline: 2px solid var(--color-lime);
+  outline-offset: 2px;
+}
+
+/* ============================================
+   Loading States
+   ============================================ */
+.mobile-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-dark-gray) 0%,
+    var(--color-medium-gray) 50%,
+    var(--color-dark-gray) 100%
+  );
+  background-size: 200% 100%;
+  animation: mobile-skeleton-loading 1.5s ease-in-out infinite;
+}
+
+@keyframes mobile-skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* ============================================
+   Media Queries
+   ============================================ */
+@media (max-width: 375px) {
+  /* Small phones */
+  :root {
+    --font-size-base: 16px;
+    --spacing-md: 12px;
+  }
+}
+
+@media (min-width: 768px) {
+  /* Tablets and larger */
+  :root {
+    --font-size-base: 20px;
+  }
+}
+
+/* Landscape orientation */
+@media (orientation: landscape) and (max-height: 500px) {
+  .mobile-full-height {
+    height: auto;
+    min-height: 100vh;
+  }
+}
+
+/* Dark mode support (already dark, but for completeness) */
+@media (prefers-color-scheme: dark) {
+  /* Already using dark theme */
+}
+
+/* Reduced motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+

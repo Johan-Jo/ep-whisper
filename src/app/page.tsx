@@ -3,12 +3,14 @@
 import { useState, useEffect } from 'react';
 import { VoiceInterface } from '@/components/voice';
 import { ConversationalVoice } from '@/components/voice/ConversationalVoice';
+import { MobileVoiceLayout } from '@/components/mobile/MobileVoiceLayout';
 import type { VoiceProcessingResult } from '@/lib/openai';
 import { generateEstimateFromVoice, formatVoiceEstimateResult } from '@/lib/nlp';
 import type { RoomCalculation, MepsRow, LineItem } from '@/lib/types';
 import { MepsCatalog } from '@/lib/excel/catalog';
 import { PDFExportButton } from '@/components/estimate/PDFExportButton';
 import type { PDFEstimateData } from '@/lib/pdf/types';
+import '../styles/mobile.css';
 
 export default function Home() {
   const [width, setWidth] = useState('4');
@@ -24,6 +26,7 @@ export default function Home() {
   const [voiceEstimateLoading, setVoiceEstimateLoading] = useState(false);
   const [pdfData, setPdfData] = useState<PDFEstimateData | null>(null);
   const [useConversationalMode, setUseConversationalMode] = useState(true);
+  const [useMobileUI, setUseMobileUI] = useState(false);
 
   // Check API key status on mount
   useEffect(() => {
@@ -33,12 +36,14 @@ export default function Home() {
   
   // Handle conversation completion
   const handleConversationComplete = async (summary: {
+    clientName: string;
     projectName: string;
     roomName: string;
     measurements: { width: number; length: number; height: number; doors?: number; windows?: number };
     tasks: string[];
   }) => {
     console.log('✅ Conversation complete:', summary);
+    console.log('👤 Client:', summary.clientName);
     
     // Update form fields
     setWidth(String(summary.measurements.width));
@@ -140,6 +145,7 @@ export default function Home() {
       
       // Format output
       const formattedEstimate = `
+👤 Kund: ${summary.clientName}
 ✅ ${summary.projectName} - ${summary.roomName}
 📊 Mått: ${summary.measurements.width}×${summary.measurements.length}×${summary.measurements.height}m
 
@@ -349,35 +355,68 @@ ${summary.tasks.map((t, i) => `  ${i + 1}. ${t}`).join('\n')}
               )}
             </div>
             
-            {/* Mode Toggle */}
+            {/* UI Mode Toggle */}
             <div className="mb-6 flex items-center gap-4 p-3 bg-gray-900 rounded border border-gray-700">
-              <span className="text-sm text-gray-400">Röstläge:</span>
+              <span className="text-sm text-gray-400">UI-läge:</span>
               <button
-                onClick={() => setUseConversationalMode(true)}
+                onClick={() => setUseMobileUI(false)}
                 className={`px-4 py-2 rounded text-sm font-medium transition-colors ${
-                  useConversationalMode 
+                  !useMobileUI 
                     ? 'bg-lime-500 text-black' 
                     : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                 }`}
               >
-                🗣️ Konversation (Steg-för-steg)
+                💻 Desktop
               </button>
               <button
-                onClick={() => setUseConversationalMode(false)}
+                onClick={() => setUseMobileUI(true)}
                 className={`px-4 py-2 rounded text-sm font-medium transition-colors ${
-                  !useConversationalMode 
+                  useMobileUI 
                     ? 'bg-lime-500 text-black' 
                     : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                 }`}
               >
-                🎤 Direkt (En kommando)
+                📱 Mobil
               </button>
             </div>
 
-              {useConversationalMode ? (
-                <ConversationalVoice onComplete={handleConversationComplete} />
-              ) : (
-                <VoiceInterface
+            {/* Voice Mode Toggle (Desktop only) */}
+            {!useMobileUI && (
+              <div className="mb-6 flex items-center gap-4 p-3 bg-gray-900 rounded border border-gray-700">
+                <span className="text-sm text-gray-400">Röstläge:</span>
+                <button
+                  onClick={() => setUseConversationalMode(true)}
+                  className={`px-4 py-2 rounded text-sm font-medium transition-colors ${
+                    useConversationalMode 
+                      ? 'bg-lime-500 text-black' 
+                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                  }`}
+                >
+                  🗣️ Konversation (Steg-för-steg)
+                </button>
+                <button
+                  onClick={() => setUseConversationalMode(false)}
+                  className={`px-4 py-2 rounded text-sm font-medium transition-colors ${
+                    !useConversationalMode 
+                      ? 'bg-lime-500 text-black' 
+                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                  }`}
+                >
+                  🎤 Direkt (En kommando)
+                </button>
+              </div>
+            )}
+
+            {/* Mobile UI Mode */}
+            {useMobileUI ? (
+              <MobileVoiceLayout onComplete={handleConversationComplete} />
+            ) : (
+              <>
+                {/* Desktop Voice Mode */}
+                {useConversationalMode ? (
+                  <ConversationalVoice onComplete={handleConversationComplete} />
+                ) : (
+                  <VoiceInterface
                 onTaskIdentified={async (result) => {
                   console.log('Voice result:', result);
                   setVoiceResults(prev => [result, ...prev].slice(0, 5)); // Keep last 5 results
@@ -539,10 +578,12 @@ ${summary.tasks.map((t, i) => `  ${i + 1}. ${t}`).join('\n')}
                   console.error('Voice error:', error);
                 }}
               />
-              )}
+                )}
+              </>
+            )}
 
-            {/* Voice Results History */}
-            {voiceResults.length > 0 && (
+            {/* Voice Results History (Desktop only) */}
+            {!useMobileUI && voiceResults.length > 0 && (
               <div className="mt-6 space-y-2">
                 <h3 className="text-sm font-semibold text-lime-400">Senaste röstresultat / Recent Results</h3>
                 {voiceResults.map((result, index) => (
@@ -565,11 +606,10 @@ ${summary.tasks.map((t, i) => `  ${i + 1}. ${t}`).join('\n')}
                   </div>
                 ))}
               </div>
-              )}
-            </div>
+            )}
 
-            {/* Voice Estimate Panel */}
-            {(voiceEstimate || voiceEstimateLoading) && (
+            {/* Voice Estimate Panel (Desktop only) */}
+            {!useMobileUI && (voiceEstimate || voiceEstimateLoading) && (
               <div className="mt-6 bg-gray-800 rounded-lg p-6 border border-gray-700">
                 <h3 className="text-lg font-semibold text-lime-400 mb-4">
                   🎤 Röstgenererad Offert / Voice Estimate
@@ -588,44 +628,48 @@ ${summary.tasks.map((t, i) => `  ${i + 1}. ${t}`).join('\n')}
               </div>
             )}
 
-          {/* Output Panel */}
-          <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-            <h2 className="text-2xl font-semibold mb-4 text-lime-400">Offert / Estimate</h2>
-            
-            {(estimate || voiceEstimate) ? (
-              <div className="space-y-4">
-                <pre className="bg-black text-lime-300 p-4 rounded overflow-x-auto text-xs font-mono whitespace-pre">
-                  {estimate || voiceEstimate}
-                </pre>
-                
-                {pdfData && (
-                  <div className="flex justify-end">
-                    <PDFExportButton 
-                      data={pdfData}
-                      filename={`offert-${pdfData.roomName.toLowerCase().replace(/\s+/g, '-')}.pdf`}
-                    />
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="text-center text-gray-500 py-12">
-                <p className="text-lg">Fyll i rumsmått och klicka på "Skapa offert"</p>
-                <p className="text-sm mt-2">Fill in room dimensions and click "Generate Estimate"</p>
-              </div>
-            )}
-          </div>
-        </div>
+          {/* Output Panel (Desktop only) */}
+          {!useMobileUI && (
+            <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+              <h2 className="text-2xl font-semibold mb-4 text-lime-400">Offert / Estimate</h2>
+              
+              {(estimate || voiceEstimate) ? (
+                <div className="space-y-4">
+                  <pre className="bg-black text-lime-300 p-4 rounded overflow-x-auto text-xs font-mono whitespace-pre">
+                    {estimate || voiceEstimate}
+                  </pre>
+                  
+                  {pdfData && (
+                    <div className="flex justify-end">
+                      <PDFExportButton 
+                        data={pdfData}
+                        filename={`offert-${pdfData.roomName.toLowerCase().replace(/\s+/g, '-')}.pdf`}
+                      />
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center text-gray-500 py-12">
+                  <p className="text-lg">Fyll i rumsmått och klicka på "Skapa offert"</p>
+                  <p className="text-sm mt-2">Fill in room dimensions and click "Generate Estimate"</p>
+                </div>
+              )}
+            </div>
+          )}
 
-        <div className="mt-8 p-6 bg-gray-800 rounded-lg border border-gray-700">
-          <h3 className="text-lg font-semibold mb-2 text-lime-400">ℹ️ Information</h3>
-          <ul className="text-sm text-gray-300 space-y-1">
-            <li>• Standard door size: 0,9m × 2,1m</li>
-            <li>• Standard window size: 1,2m × 1,2m (for this demo)</li>
-            <li>• All calculations use Swedish decimal format (comma separator)</li>
-            <li>• Tasks are mapped from Excel catalog with strict guard-rails</li>
-            <li>• ROT-avdrag calculation is not included (note displayed only)</li>
-          </ul>
-        </div>
+        {/* Information Panel (Desktop only) */}
+        {!useMobileUI && (
+          <div className="mt-8 p-6 bg-gray-800 rounded-lg border border-gray-700">
+            <h3 className="text-lg font-semibold mb-2 text-lime-400">ℹ️ Information</h3>
+            <ul className="text-sm text-gray-300 space-y-1">
+              <li>• Standard door size: 0,9m × 2,1m</li>
+              <li>• Standard window size: 1,2m × 1,2m (for this demo)</li>
+              <li>• All calculations use Swedish decimal format (comma separator)</li>
+              <li>• Tasks are mapped from Excel catalog with strict guard-rails</li>
+              <li>• ROT-avdrag calculation is not included (note displayed only)</li>
+            </ul>
+          </div>
+        )}
       </div>
     </div>
   );

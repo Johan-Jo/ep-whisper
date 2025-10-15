@@ -5,6 +5,31 @@
 import { ConversationStep } from './types';
 
 /**
+ * Parse client name from transcription
+ * Validates and formats client/customer name
+ */
+export function parseClientName(transcription: string): string | null {
+  // Remove common Swedish phrases
+  const cleaned = transcription
+    .toLowerCase()
+    .replace(/^(kunden heter|det heter|det är|namnet är|hon heter|han heter|de heter|företaget heter)\s+/i, '')
+    .trim();
+  
+  // Validate length
+  if (cleaned.length < 2 || cleaned.length > 100) {
+    return null;
+  }
+  
+  // Capitalize first letter of each word (handle Swedish characters)
+  const capitalized = cleaned
+    .split(/\s+/)
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+  
+  return capitalized;
+}
+
+/**
  * Parse project/room name from transcription
  */
 export function parseProjectName(transcription: string): string {
@@ -20,10 +45,10 @@ export function parseProjectName(transcription: string): string {
 
 /**
  * Parse room measurements from transcription
- * Supports formats like:
+ * Supports Swedish measurement formats:
+ * - "fyra och fyrtio gånger två och femtio gånger två och femtiusjus" → {width: 4.40, length: 2.50, height: 2.57}
  * - "fyra gånger fem gånger två och en halv" → {width: 4, length: 5, height: 2.5}
- * - "4 meter bred, 5 meter lång, 2.5 meter hög" → {width: 4, length: 5, height: 2.5}
- * - "bredd 4, längd 5, höjd 2,5" → {width: 4, length: 5, height: 2.5}
+ * - "4,40 meter bred, 2,50 meter lång, 2,57 meter hög" → {width: 4.40, length: 2.50, height: 2.57}
  */
 export function parseMeasurements(transcription: string): {
   width?: number;
@@ -34,21 +59,58 @@ export function parseMeasurements(transcription: string): {
 } {
   const text = transcription.toLowerCase();
   
-  // Number word mapping
+  // Number word mapping (0-99 for handling centimeters)
   const numberWords: Record<string, number> = {
-    'en': 1, 'ett': 1,
-    'två': 2, 'tre': 3, 'fyra': 4, 'fem': 5,
+    'noll': 0, 'en': 1, 'ett': 1, 'två': 2, 'tre': 3, 'fyra': 4, 'fem': 5,
     'sex': 6, 'sju': 7, 'åtta': 8, 'nio': 9, 'tio': 10,
+    'elva': 11, 'tolv': 12, 'tretton': 13, 'fjorton': 14, 'femton': 15,
+    'sexton': 16, 'sjutton': 17, 'arton': 18, 'nitton': 19,
+    'tjugo': 20, 'trettio': 30, 'fyrtio': 40, 'femtio': 50,
+    'sextio': 60, 'sjuttio': 70, 'åttio': 80, 'nittio': 90,
   };
   
-  // Handle "X och en halv" or "X och halv" BEFORE converting individual words
+  // Special handling for compound numbers in Swedish
+  // "fyra och fyrtio" = 4.40, "två och femtio" = 2.50, "tre och femtiusjus" = 3.57
   let normalized = text;
-  normalized = normalized.replace(/\b(en|ett|två|tre|fyra|fem|sex|sju|åtta|nio|tio)\s+och\s+(en\s+)?halv(a)?\b/gi, (match, num) => {
+  
+  // Handle "X och Y" where it means X.Y meters (Swedish centimeters as decimals)
+  // Pattern 1: "fyra och fyrtio fem" or "två och femti sju" (compound tens + units)
+  const compoundPattern = /(\d+|en|ett|två|tre|fyra|fem|sex|sju|åtta|nio)\s+och\s+(tjugo|trettio|fyrtio|femtio|sextio|sjuttio|åttio|nittio)\s*(en|ett|två|tre|fyra|fem|sex|sju|åtta|nio|\d)?/gi;
+  
+  normalized = normalized.replace(compoundPattern, (match, meters, tens, units) => {
+    const metersNum = numberWords[meters.toLowerCase()] || parseInt(meters) || 0;
+    let centimetersNum = numberWords[tens.toLowerCase()] || 0;
+    
+    // Add units if present (e.g., "femti sju" = 57)
+    if (units && units.trim()) {
+      const unitsNum = numberWords[units.trim().toLowerCase()] || parseInt(units.trim()) || 0;
+      centimetersNum += unitsNum;
+    }
+    
+    // Convert to decimal: 4 och 40 → 4.40, 2 och 57 → 2.57
+    const decimal = metersNum + (centimetersNum / 100);
+    return String(decimal);
+  });
+  
+  // Pattern 2: Simple "X och YY" where YY is already a two-digit number
+  const simplePattern = /(\d+|en|ett|två|tre|fyra|fem|sex|sju|åtta|nio)\s+och\s+(\d{2})/gi;
+  
+  normalized = normalized.replace(simplePattern, (match, meters, centimeters) => {
+    const metersNum = numberWords[meters.toLowerCase()] || parseInt(meters) || 0;
+    const centimetersNum = parseInt(centimeters) || 0;
+    
+    // Convert to decimal: 4 och 40 → 4.40
+    const decimal = metersNum + (centimetersNum / 100);
+    return String(decimal);
+  });
+  
+  // Handle "X och en halv" (X.5 meters)
+  normalized = normalized.replace(/\b(\d+|en|ett|två|tre|fyra|fem|sex|sju|åtta|nio|tio)\s+och\s+(en\s+)?halv(a)?\b/gi, (match, num) => {
     const base = numberWords[num.toLowerCase()] || parseFloat(num);
     return String(base + 0.5);
   });
   
-  // Convert remaining number words to digits (do this repeatedly to catch all instances)
+  // Convert remaining number words to digits
   let prevNormalized = '';
   while (prevNormalized !== normalized) {
     prevNormalized = normalized;
@@ -60,16 +122,24 @@ export function parseMeasurements(transcription: string): {
   // Extract numbers (support both comma and period as decimal)
   const numbers = normalized.match(/\d+[.,]?\d*/g)?.map(n => parseFloat(n.replace(',', '.'))) || [];
   
-  // Pattern 1: "X gånger Y gånger Z" or "X × Y × Z"
+  // Pattern 1: "X gånger Y gånger Z" - typical Swedish format
   if (text.includes('gånger') || text.includes('×') || text.includes('x')) {
-    // Need at least 3 numbers, but sometimes same number appears twice (e.g., "tre gånger tre")
-    if (numbers.length >= 2) {
+    if (numbers.length >= 3) {
       return {
         width: numbers[0],
         length: numbers[1],
-        height: numbers[2] || numbers[1], // If only 2 numbers, use length for height
+        height: numbers[2],
         doors: numbers[3] || 1,
         windows: numbers[4] || 1,
+      };
+    } else if (numbers.length === 2) {
+      // Only width and length, assume standard height
+      return {
+        width: numbers[0],
+        length: numbers[1],
+        height: 2.5, // Default height
+        doors: 1,
+        windows: 1,
       };
     }
   }

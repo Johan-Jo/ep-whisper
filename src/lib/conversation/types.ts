@@ -3,7 +3,7 @@
  */
 
 export type ConversationStep = 
-  | 'welcome'
+  | 'client_name'
   | 'project_name'
   | 'room_measurements'
   | 'tasks'
@@ -12,6 +12,7 @@ export type ConversationStep =
 
 export interface ConversationState {
   step: ConversationStep;
+  clientName?: string;
   projectName?: string;
   roomName?: string;
   measurements?: {
@@ -34,13 +35,13 @@ export interface ConversationPrompt {
 }
 
 export const CONVERSATION_PROMPTS: Record<ConversationStep, ConversationPrompt> = {
-  welcome: {
-    question: 'Välkommen till EP-Whisper! Låt oss skapa din målningsoffert. Vad heter projektet?',
-    expectedInput: 'project name',
+  client_name: {
+    question: 'Välkommen till EP-Whisper! Vad heter kunden?',
+    expectedInput: 'client name',
   },
   project_name: {
-    question: 'Tack! Vad heter rummet som ska målas?',
-    expectedInput: 'room name',
+    question: 'Tack! Vad heter projektet?',
+    expectedInput: 'project name',
   },
   room_measurements: {
     question: 'Bra! Nu behöver jag rummets mått. Säg bredd, längd och höjd i meter. Till exempel: fyra gånger fem gånger två och en halv meter.',

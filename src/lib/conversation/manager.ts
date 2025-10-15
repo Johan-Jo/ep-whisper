@@ -4,6 +4,7 @@
 
 import { ConversationState, ConversationStep, CONVERSATION_PROMPTS } from './types';
 import { 
+  parseClientName,
   parseProjectName, 
   parseMeasurements, 
   isDone, 
@@ -17,7 +18,7 @@ export class ConversationManager {
   
   constructor() {
     this.state = {
-      step: 'welcome',
+      step: 'client_name',
       tasks: [],
     };
   }
@@ -56,8 +57,8 @@ export class ConversationManager {
     }
     
     switch (this.state.step) {
-      case 'welcome':
-        return this.handleWelcome(text);
+      case 'client_name':
+        return this.handleClientName(text);
       
       case 'project_name':
         return this.handleProjectName(text);
@@ -81,31 +82,46 @@ export class ConversationManager {
   }
   
   /**
-   * Handle welcome step (project name)
+   * Handle client name step
    */
-  private handleWelcome(text: string): any {
-    const projectName = parseProjectName(text);
-    this.state.projectName = projectName;
+  private handleClientName(text: string): any {
+    const clientName = parseClientName(text);
+    
+    if (!clientName) {
+      return {
+        success: false,
+        message: 'Kundens namn måste vara mellan 2 och 100 tecken. Försök igen.',
+        nextPrompt: CONVERSATION_PROMPTS['client_name'].question,
+        error: 'Invalid client name',
+      };
+    }
+    
+    this.state.clientName = clientName;
     this.state.step = 'project_name';
     
     return {
       success: true,
-      message: `Projekt: ${projectName}`,
+      message: `Kund: ${clientName}`,
       nextPrompt: CONVERSATION_PROMPTS['project_name'].question,
     };
   }
   
   /**
-   * Handle project name step (room name)
+   * Handle project name step
    */
   private handleProjectName(text: string): any {
-    const roomName = parseProjectName(text);
-    this.state.roomName = roomName;
+    // First parse as project name
+    const projectName = parseProjectName(text);
+    this.state.projectName = projectName;
+    
+    // Now we need room name, but we'll ask for measurements directly
+    // Room name will be derived from project or asked separately if needed
+    this.state.roomName = projectName; // Use project name as room name for now
     this.state.step = 'room_measurements';
     
     return {
       success: true,
-      message: `Rum: ${roomName}`,
+      message: `Projekt: ${projectName}`,
       nextPrompt: CONVERSATION_PROMPTS['room_measurements'].question,
     };
   }
@@ -234,7 +250,7 @@ export class ConversationManager {
    * Check if conversation is complete
    */
   isComplete(): boolean {
-    return this.state.step === 'complete';
+    return this.state.step === 'complete' && !!this.state.clientName;
   }
   
   /**
@@ -242,6 +258,7 @@ export class ConversationManager {
    */
   getSummary() {
     return {
+      clientName: this.state.clientName || 'Kund',
       projectName: this.state.projectName || 'Projekt',
       roomName: this.state.roomName || 'Rum',
       measurements: this.state.measurements || { width: 4, length: 5, height: 2.5 },
@@ -254,7 +271,7 @@ export class ConversationManager {
    */
   reset() {
     this.state = {
-      step: 'welcome',
+      step: 'client_name',
       tasks: [],
     };
   }

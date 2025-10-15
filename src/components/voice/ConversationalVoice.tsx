@@ -6,6 +6,7 @@ import { VoiceRecorder } from './VoiceRecorder';
 
 interface ConversationalVoiceProps {
   onComplete: (summary: {
+    clientName: string;
     projectName: string;
     roomName: string;
     measurements: {
