@@ -297,46 +297,43 @@ export function MobileVoiceLayout({ onComplete, estimate, isGeneratingEstimate }
           allowEdit={false}
         />
         
-        {/* Live Transcript Display */}
-        {isRecording && (
-          <div className="mobile-live-transcript">
-            <div className="mobile-transcript-bubble">
-              <p className="mobile-transcript-label">🎤 Spelar in...</p>
+        {/* Status Display Area */}
+        <div className="mobile-status-area">
+          {/* Live Transcript Display */}
+          {isRecording && (
+            <div className="mobile-status-bubble">
+              <p className="mobile-status-label">🎤 Spelar in...</p>
               {liveTranscript && (
-                <p className="mobile-transcript-text">{liveTranscript}</p>
+                <p className="mobile-status-text">{liveTranscript}</p>
               )}
               <div className="mobile-recording-indicator">
                 <span className="mobile-recording-dot" />
                 <span className="mobile-recording-text">REC</span>
               </div>
             </div>
-          </div>
-        )}
-        
-        {/* Estimate Display */}
-        {isGeneratingEstimate && (
-          <div className="mobile-live-transcript">
-            <div className="mobile-transcript-bubble">
-              <p className="mobile-transcript-label">💰 Genererar offert...</p>
+          )}
+          
+          {/* Estimate Display */}
+          {isGeneratingEstimate && (
+            <div className="mobile-status-bubble">
+              <p className="mobile-status-label">💰 Genererar offert...</p>
               <div className="mobile-loading-indicator">
                 <span className="mobile-loading-dot" />
                 <span className="mobile-loading-dot" />
                 <span className="mobile-loading-dot" />
               </div>
             </div>
-          </div>
-        )}
-        
-        {estimate && !isGeneratingEstimate && (
-          <div className="mobile-live-transcript">
-            <div className="mobile-transcript-bubble">
-              <p className="mobile-transcript-label">✅ Offert klar!</p>
+          )}
+          
+          {estimate && !isGeneratingEstimate && (
+            <div className="mobile-status-bubble">
+              <p className="mobile-status-label">✅ Offert klar!</p>
               <div className="mobile-estimate-content">
                 <pre className="mobile-estimate-text">{estimate}</pre>
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
       
       {/* Footer with Hold-to-Talk Button */}
@@ -375,8 +372,17 @@ export function MobileVoiceLayout({ onComplete, estimate, isGeneratingEstimate }
         
         .mobile-conversation-area {
           flex: 1;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+        }
+        
+        .mobile-status-area {
+          padding: 16px;
+          border-top: 1px solid #1A1A1A;
+          background-color: #0A0A0A;
+          max-height: 300px;
           overflow-y: auto;
-          overflow-x: hidden;
           -webkit-overflow-scrolling: touch;
         }
         
@@ -411,21 +417,18 @@ export function MobileVoiceLayout({ onComplete, estimate, isGeneratingEstimate }
           padding-bottom: env(safe-area-inset-bottom);
         }
         
-        .mobile-live-transcript {
-          position: fixed;
-          bottom: 280px;
-          left: 16px;
-          right: 16px;
-          z-index: 50;
-          animation: slide-up 250ms ease-out;
-        }
-        
-        .mobile-transcript-bubble {
+        .mobile-status-bubble {
           background-color: #1A1A1A;
           border: 2px solid #BFFF00;
           border-radius: 16px;
           padding: 16px;
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+          margin-bottom: 12px;
+          animation: slide-up 250ms ease-out;
+        }
+        
+        .mobile-status-bubble:last-child {
+          margin-bottom: 0;
         }
         
         .mobile-loading-indicator {
@@ -466,14 +469,14 @@ export function MobileVoiceLayout({ onComplete, estimate, isGeneratingEstimate }
           margin: 0;
         }
         
-        .mobile-transcript-label {
+        .mobile-status-label {
           color: #BFFF00;
           font-size: 14px;
           font-weight: 600;
           margin: 0 0 8px 0;
         }
         
-        .mobile-transcript-text {
+        .mobile-status-text {
           color: #FFFFFF;
           font-size: 18px;
           line-height: 1.4;

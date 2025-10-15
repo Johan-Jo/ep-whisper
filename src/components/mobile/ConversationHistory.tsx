@@ -99,6 +99,9 @@ export function ConversationHistory({
           flex-direction: column;
           gap: 16px;
           background-color: #0A0A0A;
+          min-height: 0; /* Allow flex child to shrink */
+          -webkit-overflow-scrolling: touch;
+          scroll-behavior: smooth;
         }
         
         .mobile-message-wrapper {
