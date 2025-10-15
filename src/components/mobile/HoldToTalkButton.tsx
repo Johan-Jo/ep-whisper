@@ -17,116 +17,104 @@ export function HoldToTalkButton({
   isProcessing,
   disabled = false,
 }: HoldToTalkButtonProps) {
-  const [isTouching, setIsTouching] = useState(false);
-  const touchStartTimeRef = useRef<number>(0);
+  const [isPressed, setIsPressed] = useState(false);
+  const [recordingStartTime, setRecordingStartTime] = useState<number | null>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
-  const isRecordingRef = useRef(isRecording);
+  const holdTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
-  // Keep ref in sync with prop
+  const MIN_HOLD_DURATION = 150; // Minimum 150ms to prevent accidental taps
+  
+  // Cleanup timeout on unmount
   useEffect(() => {
-    isRecordingRef.current = isRecording;
-  }, [isRecording]);
-  
-  const MIN_HOLD_DURATION = 200; // Minimum 200ms to prevent accidental taps
-  
-  // Use native event listeners with passive: false to allow preventDefault
-  useEffect(() => {
-    const button = buttonRef.current;
-    if (!button) return;
+    return () => {
+      if (holdTimeoutRef.current) {
+        clearTimeout(holdTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const handlePressStart = () => {
+    if (disabled || isProcessing || isRecording) return;
     
-    const handleTouchStartNative = (e: TouchEvent) => {
-      e.preventDefault();
-      if (disabled || isProcessing) return;
-      
-      console.log('👆 Touch start');
-      setIsTouching(true);
-      touchStartTimeRef.current = Date.now();
+    console.log('👆 Press start');
+    setIsPressed(true);
+    
+    // Haptic feedback
+    if (navigator.vibrate) {
+      navigator.vibrate(10); // Light tap
+    }
+    
+    // Start recording after minimum hold duration
+    holdTimeoutRef.current = setTimeout(() => {
+      console.log('🎤 Starting recording after min hold duration');
+      setRecordingStartTime(Date.now());
+      onStartRecording();
+    }, MIN_HOLD_DURATION);
+  };
+
+  const handlePressEnd = () => {
+    if (disabled || isProcessing) return;
+    
+    console.log('👆 Press end, isRecording:', isRecording);
+    
+    // Clear the hold timeout if it hasn't fired yet
+    if (holdTimeoutRef.current) {
+      clearTimeout(holdTimeoutRef.current);
+      holdTimeoutRef.current = null;
+    }
+    
+    setIsPressed(false);
+    
+    // If we're recording, stop it
+    if (isRecording && recordingStartTime) {
+      const duration = Date.now() - recordingStartTime;
+      console.log('⏱️ Recording duration:', duration, 'ms');
+      console.log('🛑 Stopping recording');
       
       // Haptic feedback
       if (navigator.vibrate) {
-        navigator.vibrate(10); // Light tap
+        navigator.vibrate(20); // Medium tap
       }
       
-      // Start recording after minimum hold check
-      setTimeout(() => {
-        if (Date.now() - touchStartTimeRef.current >= MIN_HOLD_DURATION) {
-          console.log('🎤 Starting recording after min hold duration');
-          onStartRecording();
-        }
-      }, MIN_HOLD_DURATION);
-    };
+      onStopRecording();
+      setRecordingStartTime(null);
+    }
+  };
+
+  const handlePressCancel = () => {
+    console.log('❌ Press cancelled');
     
-    const handleTouchEndNative = (e: TouchEvent) => {
-      e.preventDefault();
-      console.log('👆 Touch end, isRecording:', isRecordingRef.current);
-      
-      if (disabled || isProcessing) return;
-      
-      setIsTouching(false);
-      const holdDuration = Date.now() - touchStartTimeRef.current;
-      
-      console.log('⏱️ Hold duration:', holdDuration, 'ms');
-      
-      // Always stop if we're currently recording
-      if (holdDuration >= MIN_HOLD_DURATION) {
-        console.log('🛑 Calling onStopRecording');
-        // Haptic feedback
-        if (navigator.vibrate) {
-          navigator.vibrate(20); // Medium tap
-        }
-        onStopRecording();
-      }
-    };
+    if (holdTimeoutRef.current) {
+      clearTimeout(holdTimeoutRef.current);
+      holdTimeoutRef.current = null;
+    }
     
-    const handleTouchCancelNative = (e: TouchEvent) => {
-      e.preventDefault();
-      console.log('❌ Touch cancelled');
-      setIsTouching(false);
-      
-      if (isRecordingRef.current) {
-        onStopRecording();
-      }
-    };
+    setIsPressed(false);
     
-    // Add listeners with passive: false to allow preventDefault
-    button.addEventListener('touchstart', handleTouchStartNative, { passive: false });
-    button.addEventListener('touchend', handleTouchEndNative, { passive: false });
-    button.addEventListener('touchcancel', handleTouchCancelNative, { passive: false });
-    
-    return () => {
-      button.removeEventListener('touchstart', handleTouchStartNative);
-      button.removeEventListener('touchend', handleTouchEndNative);
-      button.removeEventListener('touchcancel', handleTouchCancelNative);
-    };
-  }, [disabled, isProcessing, onStartRecording, onStopRecording]);
+    if (isRecording) {
+      onStopRecording();
+      setRecordingStartTime(null);
+    }
+  };
   
   // Mouse events for desktop testing
   const handleMouseDown = () => {
-    if (disabled || isProcessing) return;
-    setIsTouching(true);
-    touchStartTimeRef.current = Date.now();
-    
-    setTimeout(() => {
-      if (isTouching && Date.now() - touchStartTimeRef.current >= MIN_HOLD_DURATION) {
-        onStartRecording();
-      }
-    }, MIN_HOLD_DURATION);
+    handlePressStart();
   };
   
   const handleMouseUp = () => {
-    if (disabled || isProcessing) return;
-    setIsTouching(false);
-    const holdDuration = Date.now() - touchStartTimeRef.current;
-    
-    if (holdDuration >= MIN_HOLD_DURATION && isRecording) {
-      onStopRecording();
-    }
+    handlePressEnd();
+  };
+  
+  const handleMouseLeave = () => {
+    handlePressCancel();
   };
   
   const getButtonState = () => {
     if (disabled) return 'disabled';
     if (isProcessing) return 'processing';
     if (isRecording) return 'recording';
+    if (isPressed) return 'pressed';
     return 'idle';
   };
   
@@ -134,6 +122,7 @@ export function HoldToTalkButton({
     if (disabled) return 'Inaktiverad';
     if (isProcessing) return 'Bearbetar...';
     if (isRecording) return 'Spelar in...';
+    if (isPressed) return 'Förbereder...';
     return 'Håll för att prata';
   };
   
@@ -146,7 +135,10 @@ export function HoldToTalkButton({
         className={`mobile-hold-button mobile-hold-button-${state} mobile-no-select`}
         onMouseDown={handleMouseDown}
         onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
+        onMouseLeave={handleMouseLeave}
+        onTouchStart={handlePressStart}
+        onTouchEnd={handlePressEnd}
+        onTouchCancel={handlePressCancel}
         onContextMenu={(e) => e.preventDefault()}
         disabled={disabled}
         aria-label={getButtonText()}
@@ -225,6 +217,12 @@ export function HoldToTalkButton({
           background-color: #1A1A1A;
         }
         
+        .mobile-hold-button-pressed {
+          background-color: #1A1A1A;
+          border: 3px solid #BFFF00;
+          transform: scale(0.95);
+        }
+        
         .mobile-hold-button-recording {
           background-color: #BFFF00;
           border: 3px solid #BFFF00;
@@ -286,6 +284,10 @@ export function HoldToTalkButton({
         }
         
         .mobile-button-label-idle {
+          color: #BFFF00;
+        }
+        
+        .mobile-button-label-pressed {
           color: #BFFF00;
         }
         

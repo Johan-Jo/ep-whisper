@@ -140,8 +140,7 @@ export function MobileVoiceLayout({ onComplete }: MobileVoiceLayoutProps) {
   };
   
   const handleStopRecording = () => {
-    console.log('🛑 Stop recording called, mediaRecorder state:', mediaRecorder?.state);
-    console.log('🛑 isRecording state:', isRecording);
+    console.log('🛑 Stop recording called');
     
     // Clear timeout
     if (recordingTimeoutRef.current) {
@@ -153,21 +152,14 @@ export function MobileVoiceLayout({ onComplete }: MobileVoiceLayoutProps) {
     setIsRecording(false);
     setLiveTranscript(''); // Clear live transcript
     
-    if (mediaRecorder) {
-      console.log('🛑 MediaRecorder exists, state:', mediaRecorder.state);
-      
-      if (mediaRecorder.state === 'recording') {
-        console.log('🛑 Stopping MediaRecorder...');
-        try {
-          mediaRecorder.stop();
-        } catch (error) {
-          console.error('Error stopping MediaRecorder:', error);
-        }
-      } else {
-        console.log('⚠️ MediaRecorder not in recording state, current state:', mediaRecorder.state);
+    // Stop MediaRecorder if it exists and is recording
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+      console.log('🛑 Stopping MediaRecorder...');
+      try {
+        mediaRecorder.stop();
+      } catch (error) {
+        console.error('Error stopping MediaRecorder:', error);
       }
-    } else {
-      console.log('⚠️ No MediaRecorder instance found');
     }
   };
   
