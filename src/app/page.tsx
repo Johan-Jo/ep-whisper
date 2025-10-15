@@ -53,6 +53,7 @@ export default function Home() {
     setWindows(String(summary.measurements.windows || 1));
     
     // Generate estimate from conversation
+    console.log('🚀 Starting estimate generation...');
     setVoiceEstimateLoading(true);
     try {
       const mockMepsRows: MepsRow[] = [
@@ -130,8 +131,10 @@ export default function Home() {
         }
       ];
       
+      console.log('📋 Creating MEPS catalog...');
       const catalog = new MepsCatalog();
       await catalog.loadFromRows(mockMepsRows);
+      console.log('✅ MEPS catalog loaded with', mockMepsRows.length, 'tasks');
       
       const roomCalculation: RoomCalculation = {
         width: summary.measurements.width,
@@ -147,25 +150,34 @@ export default function Home() {
       };
       
       // Process all tasks
+      console.log('🔍 Processing tasks:', summary.tasks);
       let allMappedTasks: LineItem[] = [];
       let fullTranscription = summary.tasks.join('. ');
       
       for (const task of summary.tasks) {
+        console.log('📝 Processing task:', task);
         const estimateResult = await generateEstimateFromVoice({
           transcription: task,
           roomCalculation,
           mepsCatalog: catalog
         });
         
+        console.log('📊 Task result:', estimateResult);
+        
         if (estimateResult.success && estimateResult.mappedTasks) {
           allMappedTasks = [...allMappedTasks, ...estimateResult.mappedTasks];
+          console.log('✅ Task mapped successfully, total tasks:', allMappedTasks.length);
+        } else {
+          console.warn('⚠️ Task mapping failed:', estimateResult.errors);
         }
       }
       
       // Calculate totals
-      const subtotal = allMappedTasks.reduce((sum, item) => sum + item.lineTotal, 0);
+      console.log('💰 Calculating totals for', allMappedTasks.length, 'tasks');
+      const subtotal = allMappedTasks.reduce((sum, item) => sum + item.subtotal, 0);
       const markup = subtotal * 0.15;
       const total = subtotal + markup;
+      console.log('💵 Totals calculated - Subtotal:', subtotal, 'Markup:', markup, 'Total:', total);
       
       // Format output
       const formattedEstimate = `
@@ -183,9 +195,11 @@ ${summary.tasks.map((t, i) => `  ${i + 1}. ${t}`).join('\n')}
   • Totalt: ${total.toFixed(2)} SEK
       `.trim();
       
+      console.log('📄 Setting formatted estimate...');
       setVoiceEstimate(formattedEstimate);
       
       // Prepare PDF data
+      console.log('📋 Preparing PDF data...');
       const pdfEstimateData: PDFEstimateData = {
         roomName: summary.roomName,
         date: new Date(),
@@ -197,11 +211,13 @@ ${summary.tasks.map((t, i) => `  ${i + 1}. ${t}`).join('\n')}
         total,
       };
       setPdfData(pdfEstimateData);
+      console.log('✅ Estimate generation completed successfully!');
       
     } catch (error) {
-      console.error('Error generating estimate:', error);
+      console.error('❌ Error generating estimate:', error);
       setVoiceEstimate(`❌ Fel: ${error instanceof Error ? error.message : 'Okänt fel'}`);
     } finally {
+      console.log('🏁 Setting loading to false...');
       setVoiceEstimateLoading(false);
     }
   };
