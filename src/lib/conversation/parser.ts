@@ -112,7 +112,12 @@ export function parseMeasurements(transcription: string): {
  */
 export function isDone(transcription: string): boolean {
   const text = transcription.toLowerCase().trim();
-  return /^(klar|färdig|slut|det var allt|inga fler|stopp)$/i.test(text);
+  // Remove punctuation and extra words
+  const cleaned = text.replace(/[!?.]/g, '').trim();
+  
+  // Match various "done" expressions
+  return /^(klar|färdig|slut|det var allt|inga fler|stopp|jag är klar|det är klar|nu är jag klar)$/i.test(cleaned) ||
+         /\b(klar|färdig|slut)\b/i.test(cleaned);
 }
 
 /**
