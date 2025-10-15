@@ -39,28 +39,37 @@ export function parseMeasurements(transcription: string): {
     'en': 1, 'ett': 1,
     'två': 2, 'tre': 3, 'fyra': 4, 'fem': 5,
     'sex': 6, 'sju': 7, 'åtta': 8, 'nio': 9, 'tio': 10,
-    'halv': 0.5, 'halva': 0.5,
   };
   
-  // Convert number words to digits
+  // Handle "X och en halv" or "X och halv" BEFORE converting individual words
   let normalized = text;
-  for (const [word, num] of Object.entries(numberWords)) {
-    normalized = normalized.replace(new RegExp(`\\b${word}\\b`, 'g'), String(num));
-  }
+  normalized = normalized.replace(/\b(en|ett|två|tre|fyra|fem|sex|sju|åtta|nio|tio)\s+och\s+(en\s+)?halv(a)?\b/gi, (match, num) => {
+    const base = numberWords[num.toLowerCase()] || parseFloat(num);
+    return String(base + 0.5);
+  });
   
-  // Handle "och en halv" → 1.5
-  normalized = normalized.replace(/(\d+)\s+och\s+0\.5/g, (_, num) => String(parseFloat(num) + 0.5));
+  // Convert remaining number words to digits (do this repeatedly to catch all instances)
+  let prevNormalized = '';
+  while (prevNormalized !== normalized) {
+    prevNormalized = normalized;
+    for (const [word, num] of Object.entries(numberWords)) {
+      normalized = normalized.replace(new RegExp(`\\b${word}\\b`, 'gi'), String(num));
+    }
+  }
   
   // Extract numbers (support both comma and period as decimal)
   const numbers = normalized.match(/\d+[.,]?\d*/g)?.map(n => parseFloat(n.replace(',', '.'))) || [];
   
+  console.log('parseMeasurements debug:', { text, normalized, numbers });
+  
   // Pattern 1: "X gånger Y gånger Z" or "X × Y × Z"
   if (text.includes('gånger') || text.includes('×') || text.includes('x')) {
-    if (numbers.length >= 3) {
+    // Need at least 3 numbers, but sometimes same number appears twice (e.g., "tre gånger tre")
+    if (numbers.length >= 2) {
       return {
         width: numbers[0],
         length: numbers[1],
-        height: numbers[2],
+        height: numbers[2] || numbers[1], // If only 2 numbers, use length for height
         doors: numbers[3] || 1,
         windows: numbers[4] || 1,
       };
