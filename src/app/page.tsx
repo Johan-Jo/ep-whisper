@@ -666,7 +666,7 @@ ${summary.tasks.map((t, i) => `  ${i + 1}. ${t}`).join('\n')}
               <li>• ROT-avdrag calculation is not included (note displayed only)</li>
             </ul>
           </div>
-          </div>
+        </div>
         )}
       </div>
     </div>
