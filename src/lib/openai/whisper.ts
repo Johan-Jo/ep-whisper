@@ -62,14 +62,31 @@ export async function transcribeAudio(
 
       console.log(`[Attempt ${attempt}] Sending to Whisper API with model: ${WHISPER_CONFIG.model}, language: ${WHISPER_CONFIG.language}`);
       
-      const response = await openai.client.audio.transcriptions.create({
-        file: audioFile,
-        model: WHISPER_CONFIG.model,
-        language: WHISPER_CONFIG.language,
-        temperature: WHISPER_CONFIG.temperature,
-        response_format: opts.includeSegments ? 'verbose_json' : 'json',
-        timestamp_granularities: opts.includeSegments ? ['segment'] : undefined,
-      });
+      let response;
+      try {
+        response = await openai.client.audio.transcriptions.create({
+          file: audioFile,
+          model: WHISPER_CONFIG.model,
+          language: WHISPER_CONFIG.language,
+          temperature: WHISPER_CONFIG.temperature,
+          response_format: opts.includeSegments ? 'verbose_json' : 'json',
+          timestamp_granularities: opts.includeSegments ? ['segment'] : undefined,
+        });
+      } catch (apiError: any) {
+        console.error(`[Attempt ${attempt}] OpenAI API Error:`, {
+          message: apiError?.message || 'Unknown error',
+          status: apiError?.status,
+          type: apiError?.type,
+          code: apiError?.code,
+          error: apiError?.error,
+          fullError: JSON.stringify(apiError, null, 2)
+        });
+        throw new OpenAIError(
+          apiError?.message || apiError?.error?.message || 'OpenAI API call failed',
+          apiError?.status || 500,
+          apiError?.code || apiError?.type || 'API_ERROR'
+        );
+      }
 
       console.log(`[Attempt ${attempt}] Whisper API response:`, response);
 
