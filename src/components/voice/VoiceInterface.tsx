@@ -7,7 +7,7 @@ import { VoiceActivityDetector } from './VoiceActivityDetector';
 import { VoiceProcessingResult } from '@/lib/openai';
 
 interface VoiceInterfaceProps {
-  onTaskIdentified?: (task: string, confidence: number) => void;
+  onTaskIdentified?: (result: VoiceProcessingResult) => void;
   onError?: (error: string) => void;
   className?: string;
 }
@@ -35,7 +35,7 @@ export function VoiceInterface({
       // Extract painting keywords for task identification
       const text = result.transcription.text.toLowerCase();
       if (text.includes('måla') || text.includes('spackla') || text.includes('grundmåla')) {
-        onTaskIdentified?.(result.transcription.text, result.transcription.confidence);
+        onTaskIdentified?.(result); // Pass the full result object
       }
     }
   }, [onTaskIdentified]);
