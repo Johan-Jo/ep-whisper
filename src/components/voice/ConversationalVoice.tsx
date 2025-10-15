@@ -44,65 +44,57 @@ export function ConversationalVoice({ onComplete }: ConversationalVoiceProps) {
   
   const speak = async (text: string) => {
     try {
-      // Use browser's speech synthesis
+      // Use OpenAI TTS for better Swedish pronunciation
+      const response = await fetch('/api/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          text,
+          voice: 'nova', // Nova has excellent Swedish pronunciation
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('TTS API failed');
+      }
+      
+      const audioBlob = await response.blob();
+      const audioUrl = URL.createObjectURL(audioBlob);
+      
+      // Play audio
+      if (!audioRef.current) {
+        audioRef.current = new Audio();
+      }
+      
+      audioRef.current.src = audioUrl;
+      await audioRef.current.play();
+      
+      // Wait for audio to finish
+      return new Promise<void>((resolve) => {
+        if (audioRef.current) {
+          audioRef.current.onended = () => {
+            URL.revokeObjectURL(audioUrl);
+            resolve();
+          };
+        } else {
+          resolve();
+        }
+      });
+    } catch (error) {
+      console.error('OpenAI TTS error:', error);
+      
+      // Fallback to browser TTS with best Swedish voice available
       if ('speechSynthesis' in window) {
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = 'sv-SE';
         utterance.rate = 0.9;
-        utterance.pitch = 1.1; // Slightly higher pitch for more feminine sound
-        
-        // Try to find a Swedish female voice
-        const voices = window.speechSynthesis.getVoices();
-        
-        // Log available voices for debugging
-        console.log('Available voices:', voices.map(v => ({ name: v.name, lang: v.lang })));
-        
-        // Common female voice names in different browsers/OS
-        const femaleNames = ['female', 'zira', 'alva', 'klara', 'astrid', 'woman', 'girl', 'fiona', 'samantha', 'karen', 'tessa', 'moira', 'rishi'];
-        const maleNames = ['male', 'bengt', 'oskar', 'erik', 'david', 'mark', 'daniel'];
-        
-        const isFemaleName = (name: string) => {
-          const lower = name.toLowerCase();
-          // Explicitly exclude male voices
-          if (maleNames.some(mn => lower.includes(mn))) return false;
-          return femaleNames.some(fn => lower.includes(fn));
-        };
-        
-        // Find best Swedish voice (prioritize Microsoft Zira if available)
-        const microsoftZira = voices.find(voice => voice.name.includes('Zira'));
-        const swedishFemaleVoice = voices.find(voice => 
-          voice.lang.startsWith('sv') && isFemaleName(voice.name)
-        );
-        const anySwedishNotMale = voices.find(voice => 
-          voice.lang.startsWith('sv') && !maleNames.some(mn => voice.name.toLowerCase().includes(mn))
-        );
-        const anyFemaleVoice = voices.find(voice => isFemaleName(voice.name));
-        
-        // Prioritize: Microsoft Zira > Swedish female > Swedish not-male > any female > default
-        if (microsoftZira) {
-          console.log('✅ Selected voice: Microsoft Zira (Swedish female)');
-          utterance.voice = microsoftZira;
-        } else if (swedishFemaleVoice) {
-          console.log('✅ Selected voice:', swedishFemaleVoice.name);
-          utterance.voice = swedishFemaleVoice;
-        } else if (anySwedishNotMale) {
-          console.log('⚠️ Selected Swedish voice (excluding male):', anySwedishNotMale.name);
-          utterance.voice = anySwedishNotMale;
-        } else if (anyFemaleVoice) {
-          console.log('⚠️ Selected female voice (non-Swedish):', anyFemaleVoice.name);
-          utterance.voice = anyFemaleVoice;
-        } else {
-          console.log('❌ Using default voice (no female voice found)');
-        }
-        
+        utterance.pitch = 1.2;
         window.speechSynthesis.speak(utterance);
         
         return new Promise<void>((resolve) => {
           utterance.onend = () => resolve();
         });
       }
-    } catch (error) {
-      console.error('Speech synthesis error:', error);
     }
   };
   
