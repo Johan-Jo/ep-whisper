@@ -204,10 +204,11 @@ export default function Home() {
                   setVoiceResults(prev => [result, ...prev].slice(0, 5)); // Keep last 5 results
                   
                   // If transcription was successful, try to generate an estimate
-                  console.log('🎤 Transcription received:', result.transcription.text);
+                  console.log('🎤 Result:', result);
+                  console.log('🎤 Transcription:', result.transcription);
                   console.log('🎤 Success status:', result.success);
                   
-                  if (result.success && result.transcription.text) {
+                  if (result.success && result.transcription && result.transcription.text) {
                     console.log('🎯 Starting estimate generation...');
                     setVoiceEstimateLoading(true);
                     try {
