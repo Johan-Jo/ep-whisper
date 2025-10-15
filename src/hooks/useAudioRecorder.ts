@@ -30,8 +30,13 @@ export interface UseAudioRecorderOptions {
   channels?: number;
 }
 
-// Get supported audio format
+// Get supported audio format (browser-only)
 const getSupportedAudioType = (): string => {
+  // Check if we're in browser environment
+  if (typeof window === 'undefined' || typeof MediaRecorder === 'undefined') {
+    return 'audio/webm'; // Safe fallback for SSR
+  }
+  
   const types = [
     'audio/webm;codecs=opus',
     'audio/webm',
@@ -56,13 +61,18 @@ const DEFAULT_OPTIONS: Required<UseAudioRecorderOptions> = {
   onPermissionGranted: () => {},
   onPermissionDenied: () => {},
   maxRecordingTime: 60000, // 60 seconds
-  audioType: getSupportedAudioType(),
+  audioType: 'audio/webm', // Safe default for SSR
   sampleRate: 16000, // 16kHz for Whisper
   channels: 1, // Mono for better processing
 };
 
 export function useAudioRecorder(options: UseAudioRecorderOptions = {}): AudioRecorderState & AudioRecorderControls {
-  const opts = { ...DEFAULT_OPTIONS, ...options };
+  const opts = { 
+    ...DEFAULT_OPTIONS, 
+    ...options,
+    // Use browser-safe audio type detection
+    audioType: options.audioType || getSupportedAudioType()
+  };
 
   // State
   const [isRecording, setIsRecording] = useState(false);
