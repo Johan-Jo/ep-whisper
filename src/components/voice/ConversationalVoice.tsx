@@ -43,8 +43,11 @@ export function ConversationalVoice({ onComplete }: ConversationalVoiceProps) {
   }, [manager]);
   
   const speak = async (text: string) => {
+    console.log('🔊 Speaking:', text.substring(0, 50) + '...');
+    
     try {
       // Use OpenAI TTS for better Swedish pronunciation
+      console.log('🎤 Using OpenAI TTS (Nova voice)');
       const response = await fetch('/api/tts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -55,9 +58,12 @@ export function ConversationalVoice({ onComplete }: ConversationalVoiceProps) {
       });
       
       if (!response.ok) {
-        throw new Error('TTS API failed');
+        const error = await response.text();
+        console.error('TTS API error response:', error);
+        throw new Error(`TTS API failed: ${response.status}`);
       }
       
+      console.log('✅ TTS API success, playing audio...');
       const audioBlob = await response.blob();
       const audioUrl = URL.createObjectURL(audioBlob);
       
@@ -73,6 +79,7 @@ export function ConversationalVoice({ onComplete }: ConversationalVoiceProps) {
       return new Promise<void>((resolve) => {
         if (audioRef.current) {
           audioRef.current.onended = () => {
+            console.log('✅ Audio playback finished');
             URL.revokeObjectURL(audioUrl);
             resolve();
           };
@@ -81,10 +88,11 @@ export function ConversationalVoice({ onComplete }: ConversationalVoiceProps) {
         }
       });
     } catch (error) {
-      console.error('OpenAI TTS error:', error);
+      console.error('❌ OpenAI TTS failed, falling back to browser TTS (Bengt):', error);
       
-      // Fallback to browser TTS with best Swedish voice available
+      // Fallback to browser TTS
       if ('speechSynthesis' in window) {
+        console.log('⚠️ Using browser TTS fallback');
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = 'sv-SE';
         utterance.rate = 0.9;
