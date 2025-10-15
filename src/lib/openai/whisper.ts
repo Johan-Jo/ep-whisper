@@ -1,4 +1,5 @@
 import { openai, WHISPER_CONFIG, VAD_CONFIG, OpenAIError } from './client';
+import { fixSwedishTranscription, validateSwedishPaintingTranscription } from '../nlp/transcription-fixes';
 
 export interface TranscriptionResult {
   text: string;
@@ -71,6 +72,7 @@ export async function transcribeAudio(
           temperature: WHISPER_CONFIG.temperature,
           response_format: opts.includeSegments ? 'verbose_json' : 'json',
           timestamp_granularities: opts.includeSegments ? ['segment'] : undefined,
+          prompt: "Detta är en svensk konversation om målning. Vanliga ord: måla, väggar, tak, dörrar, fönster, lager, gånger, bredd, längd, höjd, kund, projekt, rum, mått, uppgifter, målarbänka, grundmåla.", // Swedish context prompt
         });
       } catch (apiError: any) {
         console.error(`[Attempt ${attempt}] OpenAI API Error:`, {
@@ -97,6 +99,14 @@ export async function transcribeAudio(
       const language = transcription.language || 'sv';
       const duration = transcription.duration || 0;
 
+      // Fix common Swedish transcription errors
+      const fixedText = fixSwedishTranscription(text);
+      console.log(`[Attempt ${attempt}] Original: "${text}" → Fixed: "${fixedText}"`);
+      
+      // Validate transcription for Swedish painting context
+      const validation = validateSwedishPaintingTranscription(fixedText);
+      console.log(`[Attempt ${attempt}] Validation:`, validation);
+      
       // Check confidence threshold (disabled for MVP - accept all valid transcriptions)
       // Note: Whisper is generally accurate, and users can always correct in the UI
       if (confidence < 0.2) { // Only reject extremely poor quality (< 20%)
@@ -104,8 +114,8 @@ export async function transcribeAudio(
       }
 
       return {
-        text: normalizeSwedishText(text),
-        confidence,
+        text: normalizeSwedishText(fixedText),
+        confidence: Math.max(confidence, validation.confidence), // Use higher confidence
         language,
         duration,
         segments: opts.includeSegments ? transcription.segments : undefined,
