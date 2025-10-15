@@ -1,13 +1,13 @@
 import OpenAI from 'openai';
 
-// Get API key from environment variable (client-side)
+// Get API key from environment variable (client-side and server-side)
 const getApiKey = () => {
   if (typeof window !== 'undefined') {
     // Client-side: use NEXT_PUBLIC_ prefix
     return process.env.NEXT_PUBLIC_OPENAI_API_KEY;
   }
-  // Server-side: use regular env var
-  return process.env.OPENAI_API_KEY;
+  // Server-side: try both NEXT_PUBLIC_ (for server components) and regular
+  return process.env.NEXT_PUBLIC_OPENAI_API_KEY || process.env.OPENAI_API_KEY;
 };
 
 // OpenAI client configuration for Swedish voice processing
