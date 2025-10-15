@@ -36,7 +36,7 @@ export interface ConversationPrompt {
 
 export const CONVERSATION_PROMPTS: Record<ConversationStep, ConversationPrompt> = {
   client_name: {
-    question: 'Välkommen till EP-Whisper! Vad heter kunden?',
+    question: 'Hej och välkommen till EP-Whisper! Här kan du skapa supersnabba målningsofferter genom att bara prata med vår storpattade sekreterare Ursula. Vi börjar med att fråga: Vad heter kunden?',
     expectedInput: 'client name',
   },
   project_name: {
