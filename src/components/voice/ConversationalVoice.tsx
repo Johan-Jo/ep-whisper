@@ -53,19 +53,37 @@ export function ConversationalVoice({ onComplete }: ConversationalVoiceProps) {
         
         // Try to find a Swedish female voice
         const voices = window.speechSynthesis.getVoices();
+        
+        // Log available voices for debugging
+        console.log('Available voices:', voices.map(v => ({ name: v.name, lang: v.lang })));
+        
+        // Common female voice names in different browsers/OS
+        const femaleNames = ['female', 'zira', 'alva', 'klara', 'astrid', 'woman', 'girl', 'fiona', 'samantha', 'karen', 'tessa', 'moira', 'rishi'];
+        
+        const isFemaleName = (name: string) => {
+          const lower = name.toLowerCase();
+          return femaleNames.some(fn => lower.includes(fn));
+        };
+        
+        // Find best Swedish voice
         const swedishFemaleVoice = voices.find(voice => 
-          voice.lang.startsWith('sv') && voice.name.toLowerCase().includes('female')
+          voice.lang.startsWith('sv') && isFemaleName(voice.name)
         );
         const swedishVoice = voices.find(voice => voice.lang.startsWith('sv'));
-        const anyFemaleVoice = voices.find(voice => voice.name.toLowerCase().includes('female'));
+        const anyFemaleVoice = voices.find(voice => isFemaleName(voice.name));
         
         // Prioritize: Swedish female > Swedish any > any female > default
         if (swedishFemaleVoice) {
+          console.log('Selected voice:', swedishFemaleVoice.name);
           utterance.voice = swedishFemaleVoice;
         } else if (swedishVoice) {
+          console.log('Selected Swedish voice (not specifically female):', swedishVoice.name);
           utterance.voice = swedishVoice;
         } else if (anyFemaleVoice) {
+          console.log('Selected female voice (non-Swedish):', anyFemaleVoice.name);
           utterance.voice = anyFemaleVoice;
+        } else {
+          console.log('Using default voice');
         }
         
         window.speechSynthesis.speak(utterance);
