@@ -253,9 +253,13 @@ ${summary.tasks.map((t, i) => `  ${i + 1}. ${t}`).join('\n')}
         </h1>
         <p className="text-gray-400 mb-8">Voice-to-Estimate Painting Calculator (Test Interface)</p>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Input Panel */}
-          <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+        {/* Mobile UI Mode */}
+        {useMobileUI ? (
+          <MobileVoiceLayout onComplete={handleConversationComplete} />
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Input Panel */}
+            <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
             <h2 className="text-2xl font-semibold mb-4 text-lime-400">Rumsmått / Room Dimensions</h2>
             
             <div className="space-y-4">
@@ -407,16 +411,11 @@ ${summary.tasks.map((t, i) => `  ${i + 1}. ${t}`).join('\n')}
               </div>
             )}
 
-            {/* Mobile UI Mode */}
-            {useMobileUI ? (
-              <MobileVoiceLayout onComplete={handleConversationComplete} />
+            {/* Desktop Voice Mode */}
+            {useConversationalMode ? (
+              <ConversationalVoice onComplete={handleConversationComplete} />
             ) : (
-              <>
-                {/* Desktop Voice Mode */}
-                {useConversationalMode ? (
-                  <ConversationalVoice onComplete={handleConversationComplete} />
-                ) : (
-                  <VoiceInterface
+              <VoiceInterface
                 onTaskIdentified={async (result) => {
                   console.log('Voice result:', result);
                   setVoiceResults(prev => [result, ...prev].slice(0, 5)); // Keep last 5 results
@@ -578,12 +577,10 @@ ${summary.tasks.map((t, i) => `  ${i + 1}. ${t}`).join('\n')}
                   console.error('Voice error:', error);
                 }}
               />
-                )}
-              </>
             )}
 
-            {/* Voice Results History (Desktop only) */}
-            {!useMobileUI && voiceResults.length > 0 && (
+            {/* Voice Results History */}
+            {voiceResults.length > 0 && (
               <div className="mt-6 space-y-2">
                 <h3 className="text-sm font-semibold text-lime-400">Senaste röstresultat / Recent Results</h3>
                 {voiceResults.map((result, index) => (
@@ -608,8 +605,8 @@ ${summary.tasks.map((t, i) => `  ${i + 1}. ${t}`).join('\n')}
               </div>
             )}
 
-            {/* Voice Estimate Panel (Desktop only) */}
-            {!useMobileUI && (voiceEstimate || voiceEstimateLoading) && (
+            {/* Voice Estimate Panel */}
+            {(voiceEstimate || voiceEstimateLoading) && (
               <div className="mt-6 bg-gray-800 rounded-lg p-6 border border-gray-700">
                 <h3 className="text-lg font-semibold text-lime-400 mb-4">
                   🎤 Röstgenererad Offert / Voice Estimate
@@ -628,9 +625,10 @@ ${summary.tasks.map((t, i) => `  ${i + 1}. ${t}`).join('\n')}
               </div>
             )}
 
-          {/* Output Panel (Desktop only) */}
-          {!useMobileUI && (
-            <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+          </div>
+
+          {/* Output Panel */}
+          <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
               <h2 className="text-2xl font-semibold mb-4 text-lime-400">Offert / Estimate</h2>
               
               {(estimate || voiceEstimate) ? (
@@ -655,11 +653,10 @@ ${summary.tasks.map((t, i) => `  ${i + 1}. ${t}`).join('\n')}
                 </div>
               )}
             </div>
-          )}
+          </div>
 
-        {/* Information Panel (Desktop only) */}
-        {!useMobileUI && (
-          <div className="mt-8 p-6 bg-gray-800 rounded-lg border border-gray-700">
+          {/* Information Panel */}
+          <div className="mt-8 p-6 bg-gray-800 rounded-lg border border-gray-700 lg:col-span-3">
             <h3 className="text-lg font-semibold mb-2 text-lime-400">ℹ️ Information</h3>
             <ul className="text-sm text-gray-300 space-y-1">
               <li>• Standard door size: 0,9m × 2,1m</li>
@@ -668,6 +665,7 @@ ${summary.tasks.map((t, i) => `  ${i + 1}. ${t}`).join('\n')}
               <li>• Tasks are mapped from Excel catalog with strict guard-rails</li>
               <li>• ROT-avdrag calculation is not included (note displayed only)</li>
             </ul>
+          </div>
           </div>
         )}
       </div>
