@@ -33,6 +33,7 @@ export function MobileVoiceLayout({ onComplete }: MobileVoiceLayoutProps) {
   const [currentStep, setCurrentStep] = useState<ConversationStep>('client_name');
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
+  const [liveTranscript, setLiveTranscript] = useState<string>('');
   
   // Initialize with welcome message
   useEffect(() => {
@@ -119,8 +120,15 @@ export function MobileVoiceLayout({ onComplete }: MobileVoiceLayoutProps) {
   };
   
   const handleStopRecording = () => {
-    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+    console.log('🛑 Stop recording called, mediaRecorder state:', mediaRecorder?.state);
+    
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+      console.log('🛑 Stopping MediaRecorder...');
       mediaRecorder.stop();
+      setIsRecording(false);
+      setLiveTranscript(''); // Clear live transcript
+    } else {
+      console.log('⚠️ MediaRecorder not in recording state');
       setIsRecording(false);
     }
   };
@@ -239,6 +247,22 @@ export function MobileVoiceLayout({ onComplete }: MobileVoiceLayoutProps) {
           messages={messages}
           allowEdit={false}
         />
+        
+        {/* Live Transcript Display */}
+        {isRecording && (
+          <div className="mobile-live-transcript">
+            <div className="mobile-transcript-bubble">
+              <p className="mobile-transcript-label">🎤 Spelar in...</p>
+              {liveTranscript && (
+                <p className="mobile-transcript-text">{liveTranscript}</p>
+              )}
+              <div className="mobile-recording-indicator">
+                <span className="mobile-recording-dot" />
+                <span className="mobile-recording-text">REC</span>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
       
       {/* Footer with Hold-to-Talk Button */}
@@ -303,6 +327,80 @@ export function MobileVoiceLayout({ onComplete }: MobileVoiceLayoutProps) {
         
         .mobile-safe-bottom {
           padding-bottom: env(safe-area-inset-bottom);
+        }
+        
+        .mobile-live-transcript {
+          position: fixed;
+          bottom: 280px;
+          left: 16px;
+          right: 16px;
+          z-index: 50;
+          animation: slide-up 250ms ease-out;
+        }
+        
+        .mobile-transcript-bubble {
+          background-color: #1A1A1A;
+          border: 2px solid #BFFF00;
+          border-radius: 16px;
+          padding: 16px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        }
+        
+        .mobile-transcript-label {
+          color: #BFFF00;
+          font-size: 14px;
+          font-weight: 600;
+          margin: 0 0 8px 0;
+        }
+        
+        .mobile-transcript-text {
+          color: #FFFFFF;
+          font-size: 18px;
+          line-height: 1.4;
+          margin: 0;
+          min-height: 24px;
+        }
+        
+        .mobile-recording-indicator {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-top: 12px;
+        }
+        
+        .mobile-recording-dot {
+          width: 8px;
+          height: 8px;
+          background-color: #FF4444;
+          border-radius: 50%;
+          animation: pulse 1s ease-in-out infinite;
+        }
+        
+        .mobile-recording-text {
+          color: #FF4444;
+          font-size: 12px;
+          font-weight: 700;
+          letter-spacing: 1px;
+        }
+        
+        @keyframes slide-up {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        @keyframes pulse {
+          0%, 100% {
+            opacity: 1;
+          }
+          50% {
+            opacity: 0.3;
+          }
         }
       `}</style>
     </div>

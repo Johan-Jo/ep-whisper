@@ -20,6 +20,12 @@ export function HoldToTalkButton({
   const [isTouching, setIsTouching] = useState(false);
   const touchStartTimeRef = useRef<number>(0);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const isRecordingRef = useRef(isRecording);
+  
+  // Keep ref in sync with prop
+  useEffect(() => {
+    isRecordingRef.current = isRecording;
+  }, [isRecording]);
   
   const MIN_HOLD_DURATION = 200; // Minimum 200ms to prevent accidental taps
   
@@ -32,6 +38,7 @@ export function HoldToTalkButton({
       e.preventDefault();
       if (disabled || isProcessing) return;
       
+      console.log('👆 Touch start');
       setIsTouching(true);
       touchStartTimeRef.current = Date.now();
       
@@ -43,6 +50,7 @@ export function HoldToTalkButton({
       // Start recording after minimum hold check
       setTimeout(() => {
         if (Date.now() - touchStartTimeRef.current >= MIN_HOLD_DURATION) {
+          console.log('🎤 Starting recording after min hold duration');
           onStartRecording();
         }
       }, MIN_HOLD_DURATION);
@@ -50,13 +58,18 @@ export function HoldToTalkButton({
     
     const handleTouchEndNative = (e: TouchEvent) => {
       e.preventDefault();
+      console.log('👆 Touch end, isRecording:', isRecordingRef.current);
+      
       if (disabled || isProcessing) return;
       
       setIsTouching(false);
       const holdDuration = Date.now() - touchStartTimeRef.current;
       
-      // Only stop recording if we actually started (held long enough)
-      if (holdDuration >= MIN_HOLD_DURATION && isRecording) {
+      console.log('⏱️ Hold duration:', holdDuration, 'ms');
+      
+      // Always stop if we're currently recording
+      if (holdDuration >= MIN_HOLD_DURATION) {
+        console.log('🛑 Calling onStopRecording');
         // Haptic feedback
         if (navigator.vibrate) {
           navigator.vibrate(20); // Medium tap
@@ -67,9 +80,10 @@ export function HoldToTalkButton({
     
     const handleTouchCancelNative = (e: TouchEvent) => {
       e.preventDefault();
+      console.log('❌ Touch cancelled');
       setIsTouching(false);
       
-      if (isRecording) {
+      if (isRecordingRef.current) {
         onStopRecording();
       }
     };
@@ -84,7 +98,7 @@ export function HoldToTalkButton({
       button.removeEventListener('touchend', handleTouchEndNative);
       button.removeEventListener('touchcancel', handleTouchCancelNative);
     };
-  }, [disabled, isProcessing, isRecording, onStartRecording, onStopRecording]);
+  }, [disabled, isProcessing, onStartRecording, onStopRecording]);
   
   // Mouse events for desktop testing
   const handleMouseDown = () => {
