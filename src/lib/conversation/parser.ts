@@ -122,6 +122,60 @@ export function parseMeasurements(transcription: string): {
   // Extract numbers (support both comma and period as decimal)
   const numbers = normalized.match(/\d+[.,]?\d*/g)?.map(n => parseFloat(n.replace(',', '.'))) || [];
   
+  // Special handling for comma-separated measurements like "4, 34, gånger 5 och 25, gånger 2 och 50"
+  // This should be interpreted as "4.34 × 5.25 × 2.50"
+  if (text.includes(',') && text.includes('gånger')) {
+    // Split by "gånger" to get measurement groups
+    const gangerParts = text.split('gånger').map(part => part.trim());
+    const measurementGroups: number[] = [];
+    
+    for (let i = 0; i < gangerParts.length; i++) {
+      const part = gangerParts[i];
+      
+      // Handle different patterns in each part
+      if (part.includes('och')) {
+        // Pattern: "X och Y" (e.g., "5 och 25" = 5.25)
+        const ochMatch = part.match(/(\d+)\s+och\s+(\d+)/);
+        if (ochMatch) {
+          const whole = parseFloat(ochMatch[1]);
+          const decimal = parseFloat(ochMatch[2]);
+          const combined = whole + (decimal / 100);
+          measurementGroups.push(combined);
+        }
+      } else if (part.includes(',')) {
+        // Pattern: "X, Y" (e.g., "4, 34" = 4.34)
+        const numbers = part.match(/\d+/g);
+        if (numbers && numbers.length >= 2) {
+          const whole = parseFloat(numbers[0]);
+          const decimal = parseFloat(numbers[1]);
+          const combined = whole + (decimal / 100);
+          measurementGroups.push(combined);
+        } else if (numbers && numbers.length === 1) {
+          // Single number
+          measurementGroups.push(parseFloat(numbers[0]));
+        }
+      } else {
+        // Pattern: single number or simple format
+        const numbers = part.match(/\d+[.,]?\d*/g);
+        if (numbers && numbers.length > 0) {
+          const num = parseFloat(numbers[0].replace(',', '.'));
+          measurementGroups.push(num);
+        }
+      }
+    }
+    
+    // If we found measurement groups, use them
+    if (measurementGroups.length >= 3) {
+      return {
+        width: measurementGroups[0],
+        length: measurementGroups[1],
+        height: measurementGroups[2],
+        doors: measurementGroups[3] || 1,
+        windows: measurementGroups[4] || 1,
+      };
+    }
+  }
+  
   // Pattern 1: "X gånger Y gånger Z" - typical Swedish format
   if (text.includes('gånger') || text.includes('×') || text.includes('x')) {
     if (numbers.length >= 3) {
