@@ -62,7 +62,7 @@ export const TTS_CONFIG = {
 // Voice Activity Detection settings
 export const VAD_CONFIG = {
   enabled: true,
-  confidenceThreshold: 0.7, // Request repeat if confidence < 70%
+  confidenceThreshold: 0.3, // Request repeat if confidence < 30% (lowered for testing)
   silenceThreshold: 1000, // 1 second of silence to stop recording
   minRecordingDuration: 500, // Minimum 500ms recording
 } as const;

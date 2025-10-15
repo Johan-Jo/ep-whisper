@@ -44,11 +44,24 @@ export async function transcribeAudio(
         ? Buffer.from(audioBuffer) 
         : audioBuffer;
 
+      // Validate buffer size and content
+      if (buffer.length < 1000) {
+        throw new OpenAIError(
+          `Audio buffer too small: ${buffer.length} bytes (minimum: 1000 bytes)`,
+          400,
+          'AUDIO_TOO_SMALL'
+        );
+      }
+
       // Create a File-like object for the API with proper format detection
       const audioFormat = detectAudioFormat(buffer);
-      console.log(`Audio format detected: ${audioFormat.mimeType}, size: ${buffer.length} bytes`);
+      console.log(`[Attempt ${attempt}] Audio format detected: ${audioFormat.mimeType}, size: ${buffer.length} bytes`);
+      console.log(`[Attempt ${attempt}] Buffer header: ${buffer.toString('hex', 0, Math.min(16, buffer.length))}`);
+      
       const audioFile = new File([buffer], `audio.${audioFormat.extension}`, { type: audioFormat.mimeType });
 
+      console.log(`[Attempt ${attempt}] Sending to Whisper API with model: ${WHISPER_CONFIG.model}, language: ${WHISPER_CONFIG.language}`);
+      
       const response = await openai.client.audio.transcriptions.create({
         file: audioFile,
         model: WHISPER_CONFIG.model,
@@ -57,6 +70,8 @@ export async function transcribeAudio(
         response_format: opts.includeSegments ? 'verbose_json' : 'json',
         timestamp_granularities: opts.includeSegments ? ['segment'] : undefined,
       });
+
+      console.log(`[Attempt ${attempt}] Whisper API response:`, response);
 
       // Extract transcription data
       const transcription = response as any; // Type assertion for verbose_json format
@@ -84,6 +99,12 @@ export async function transcribeAudio(
     } catch (error) {
       lastError = error instanceof Error ? error : new Error('Unknown error');
       
+      console.error(`[Attempt ${attempt}] Transcription failed:`, {
+        error: lastError.message,
+        stack: lastError.stack,
+        name: lastError.name
+      });
+      
       // Don't retry on certain error types
       if (error instanceof OpenAIError && error.code === 'LOW_CONFIDENCE') {
         throw error;
@@ -91,7 +112,7 @@ export async function transcribeAudio(
 
       // Log retry attempt
       if (attempt < opts.maxRetries) {
-        console.warn(`Transcription attempt ${attempt} failed:`, lastError.message);
+        console.warn(`Transcription attempt ${attempt} failed, retrying in ${Math.pow(2, attempt - 1)}s:`, lastError.message);
         // Exponential backoff: wait 1s, 2s, 4s
         await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt - 1) * 1000));
       }

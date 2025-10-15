@@ -21,6 +21,7 @@ export function VoiceRecorder({
   const [isProcessing, setIsProcessing] = useState(false);
   const [lastTranscription, setLastTranscription] = useState<string>('');
   const [lastConfidence, setLastConfidence] = useState<number>(0);
+  const [debugInfo, setDebugInfo] = useState<string>('');
 
   const {
     isRecording,
@@ -47,6 +48,14 @@ export function VoiceRecorder({
       try {
         // Convert blob to ArrayBuffer for processing
         const arrayBuffer = await blob.arrayBuffer();
+        
+        // Debug: Show audio info
+        setDebugInfo(`Audio: ${blob.type}, ${blob.size} bytes, ${Math.round(blob.size / 1000)}KB`);
+        console.log('Audio blob info:', {
+          type: blob.type,
+          size: blob.size,
+          sizeKB: Math.round(blob.size / 1000)
+        });
         
         // Process voice input
         const result = await processVoiceInput(arrayBuffer, {
@@ -175,6 +184,18 @@ export function VoiceRecorder({
           </div>
           <div className="text-sm text-gray-500">
             Detta kan ta några sekunder
+          </div>
+        </div>
+      )}
+
+      {/* Debug Info */}
+      {debugInfo && (
+        <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3">
+          <div className="text-sm font-medium text-blue-700 dark:text-blue-300 mb-1">
+            Debug Info:
+          </div>
+          <div className="text-sm font-mono text-blue-600 dark:text-blue-400">
+            {debugInfo}
           </div>
         </div>
       )}
