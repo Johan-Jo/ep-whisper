@@ -38,9 +38,9 @@ const NUMBER_WORDS: Record<string, number> = {
  */
 export function extractSlots(text: string): SlotExtractionResult {
   const normalizedText = text.toLowerCase().trim();
-  let confidence = 1.0;
+  const confidence = 1.0;
   
-  const result: SlotExtractionResult = { confidence: 0 };
+  const result: SlotExtractionResult = { confidence };
   
   // Extract area
   const areaMatch = SLOT_PATTERNS.area.exec(normalizedText);

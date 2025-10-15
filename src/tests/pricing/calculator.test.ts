@@ -220,7 +220,7 @@ describe('Pricing Calculator', () => {
         },
       ];
 
-      // @ts-ignore - accessing private method for testing
+      // @ts-expect-error - accessing private method for testing
       catalog.indexTasks(tasks);
 
       const lineItems: LineItem[] = [

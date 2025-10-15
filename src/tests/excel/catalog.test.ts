@@ -45,7 +45,7 @@ describe('MepsCatalog', () => {
 
   describe('Task Indexing', () => {
     it('should index tasks by meps_id', () => {
-      // @ts-ignore - accessing private method for testing
+      // @ts-expect-error - accessing private method for testing
       catalog.indexTasks(sampleTasks);
 
       const task = catalog.getTask('TEST-VÄGG-001');
@@ -54,7 +54,7 @@ describe('MepsCatalog', () => {
     });
 
     it('should return undefined for non-existent task', () => {
-      // @ts-ignore
+      // @ts-expect-error
       catalog.indexTasks(sampleTasks);
 
       const task = catalog.getTask('NON-EXISTENT');
@@ -64,7 +64,7 @@ describe('MepsCatalog', () => {
 
   describe('Synonym Search', () => {
     beforeEach(() => {
-      // @ts-ignore
+      // @ts-expect-error
       catalog.indexTasks(sampleTasks);
     });
 
@@ -101,7 +101,7 @@ describe('MepsCatalog', () => {
 
   describe('Surface Type Search', () => {
     beforeEach(() => {
-      // @ts-ignore
+      // @ts-expect-error
       catalog.indexTasks(sampleTasks);
     });
 
@@ -124,7 +124,7 @@ describe('MepsCatalog', () => {
 
   describe('Fuzzy Search', () => {
     beforeEach(() => {
-      // @ts-ignore
+      // @ts-expect-error
       catalog.indexTasks(sampleTasks);
     });
 
@@ -158,7 +158,7 @@ describe('MepsCatalog', () => {
 
   describe('Unit Filtering', () => {
     beforeEach(() => {
-      // @ts-ignore
+      // @ts-expect-error
       catalog.indexTasks(sampleTasks);
     });
 
@@ -180,7 +180,7 @@ describe('MepsCatalog', () => {
 
   describe('Task Existence', () => {
     beforeEach(() => {
-      // @ts-ignore
+      // @ts-expect-error
       catalog.indexTasks(sampleTasks);
     });
 
@@ -195,7 +195,7 @@ describe('MepsCatalog', () => {
 
   describe('Statistics', () => {
     beforeEach(() => {
-      // @ts-ignore
+      // @ts-expect-error
       catalog.indexTasks(sampleTasks);
     });
 
@@ -222,7 +222,7 @@ describe('MepsCatalog', () => {
 
   describe('Clear Catalog', () => {
     it('should clear all data', () => {
-      // @ts-ignore
+      // @ts-expect-error
       catalog.indexTasks(sampleTasks);
       expect(catalog.getAllTasks()).toHaveLength(4);
 

@@ -30,7 +30,7 @@ export function mapSpokenTaskToMeps(
   }
 
   // Filter by surface type if provided
-  let candidates = surfaceType 
+  const candidates = surfaceType 
     ? catalog.getTasksBySurfaceType(surfaceType)
     : catalog.getAllTasks();
 

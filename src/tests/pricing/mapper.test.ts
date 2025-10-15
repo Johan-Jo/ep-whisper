@@ -41,7 +41,7 @@ describe('Task Mapper', () => {
 
   beforeEach(() => {
     catalog = new MepsCatalog();
-    // @ts-ignore
+    // @ts-expect-error
     catalog.indexTasks(sampleTasks);
   });
 
