@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ConversationManager } from '@/lib/conversation';
 import { ProgressIndicator } from './ProgressIndicator';
 import { ConversationHistory, ConversationMessage } from './ConversationHistory';
@@ -34,6 +34,20 @@ export function MobileVoiceLayout({ onComplete }: MobileVoiceLayoutProps) {
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
   const [liveTranscript, setLiveTranscript] = useState<string>('');
+  const recordingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Cleanup MediaRecorder on unmount
+  useEffect(() => {
+    return () => {
+      if (recordingTimeoutRef.current) {
+        clearTimeout(recordingTimeoutRef.current);
+      }
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        console.log('🧹 Cleaning up MediaRecorder on unmount');
+        mediaRecorder.stop();
+      }
+    };
+  }, [mediaRecorder]);
   
   // Initialize with welcome message
   useEffect(() => {
@@ -111,6 +125,12 @@ export function MobileVoiceLayout({ onComplete }: MobileVoiceLayoutProps) {
       setIsRecording(true);
       setAudioChunks(chunks);
       
+      // Set a timeout to force stop recording after 30 seconds (safety mechanism)
+      recordingTimeoutRef.current = setTimeout(() => {
+        console.log('⏰ Recording timeout - force stopping');
+        handleStopRecording();
+      }, 30000);
+      
     } catch (error) {
       console.error('Recording error:', error);
       if (navigator.vibrate) {
@@ -121,15 +141,33 @@ export function MobileVoiceLayout({ onComplete }: MobileVoiceLayoutProps) {
   
   const handleStopRecording = () => {
     console.log('🛑 Stop recording called, mediaRecorder state:', mediaRecorder?.state);
+    console.log('🛑 isRecording state:', isRecording);
     
-    if (mediaRecorder && mediaRecorder.state === 'recording') {
-      console.log('🛑 Stopping MediaRecorder...');
-      mediaRecorder.stop();
-      setIsRecording(false);
-      setLiveTranscript(''); // Clear live transcript
+    // Clear timeout
+    if (recordingTimeoutRef.current) {
+      clearTimeout(recordingTimeoutRef.current);
+      recordingTimeoutRef.current = null;
+    }
+    
+    // Always stop recording state immediately
+    setIsRecording(false);
+    setLiveTranscript(''); // Clear live transcript
+    
+    if (mediaRecorder) {
+      console.log('🛑 MediaRecorder exists, state:', mediaRecorder.state);
+      
+      if (mediaRecorder.state === 'recording') {
+        console.log('🛑 Stopping MediaRecorder...');
+        try {
+          mediaRecorder.stop();
+        } catch (error) {
+          console.error('Error stopping MediaRecorder:', error);
+        }
+      } else {
+        console.log('⚠️ MediaRecorder not in recording state, current state:', mediaRecorder.state);
+      }
     } else {
-      console.log('⚠️ MediaRecorder not in recording state');
-      setIsRecording(false);
+      console.log('⚠️ No MediaRecorder instance found');
     }
   };
   
