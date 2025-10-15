@@ -1,13 +1,47 @@
 import OpenAI from 'openai';
 
+// Get API key from environment variable (client-side)
+const getApiKey = () => {
+  if (typeof window !== 'undefined') {
+    // Client-side: use NEXT_PUBLIC_ prefix
+    return process.env.NEXT_PUBLIC_OPENAI_API_KEY;
+  }
+  // Server-side: use regular env var
+  return process.env.OPENAI_API_KEY;
+};
+
 // OpenAI client configuration for Swedish voice processing
-export const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-  // Default configuration for Swedish locale
-  defaultHeaders: {
-    'OpenAI-Organization': process.env.OPENAI_ORG_ID,
-  },
-});
+// Note: Lazy initialization to avoid errors on page load
+let openaiClient: OpenAI | null = null;
+
+export const getOpenAIClient = (): OpenAI => {
+  const apiKey = getApiKey();
+  
+  if (!apiKey) {
+    throw new Error(
+      'OpenAI API key is missing. Please set NEXT_PUBLIC_OPENAI_API_KEY in your .env.local file.'
+    );
+  }
+  
+  if (!openaiClient) {
+    openaiClient = new OpenAI({
+      apiKey,
+      dangerouslyAllowBrowser: true, // Allow usage in browser for client-side calls
+      defaultHeaders: {
+        'OpenAI-Organization': process.env.NEXT_PUBLIC_OPENAI_ORG_ID,
+      },
+    });
+  }
+  
+  return openaiClient;
+};
+
+// Legacy export for backward compatibility (will throw error if API key not set)
+export const openai = {
+  get client() {
+    return getOpenAIClient();
+  }
+};
 
 // Whisper configuration for Swedish speech recognition
 export const WHISPER_CONFIG = {

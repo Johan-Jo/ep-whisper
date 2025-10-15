@@ -1,6 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { VoiceInterface } from '@/components/voice';
+import type { VoiceProcessingResult } from '@/lib/openai';
 
 export default function Home() {
   const [width, setWidth] = useState('4');
@@ -10,6 +12,14 @@ export default function Home() {
   const [windows, setWindows] = useState('1');
   const [estimate, setEstimate] = useState<string>('');
   const [loading, setLoading] = useState(false);
+  const [voiceResults, setVoiceResults] = useState<VoiceProcessingResult[]>([]);
+  const [apiKeyStatus, setApiKeyStatus] = useState<'unknown' | 'present' | 'missing'>('unknown');
+
+  // Check API key status on mount
+  useEffect(() => {
+    const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY;
+    setApiKeyStatus(apiKey ? 'present' : 'missing');
+  }, []);
 
   const calculateEstimate = async () => {
     setLoading(true);
@@ -54,7 +64,7 @@ export default function Home() {
         </h1>
         <p className="text-gray-400 mb-8">Voice-to-Estimate Painting Calculator (Test Interface)</p>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Input Panel */}
           <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
             <h2 className="text-2xl font-semibold mb-4 text-lime-400">Rumsmått / Room Dimensions</h2>
@@ -131,6 +141,64 @@ export default function Home() {
                 • Måla tak (2 lager)
               </p>
             </div>
+          </div>
+
+          {/* Voice Interface Panel */}
+          <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+            {/* API Key Status */}
+            <div className="mb-4 p-3 rounded bg-gray-900 border border-gray-700">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-400">OpenAI API Key:</span>
+                {apiKeyStatus === 'unknown' && (
+                  <span className="text-sm text-yellow-400">⏳ Checking...</span>
+                )}
+                {apiKeyStatus === 'present' && (
+                  <span className="text-sm text-green-400">✓ Configured</span>
+                )}
+                {apiKeyStatus === 'missing' && (
+                  <span className="text-sm text-red-400">✗ Missing</span>
+                )}
+              </div>
+              {apiKeyStatus === 'missing' && (
+                <p className="text-xs text-gray-500 mt-2">
+                  Set NEXT_PUBLIC_OPENAI_API_KEY in .env.local
+                </p>
+              )}
+            </div>
+
+            <VoiceInterface
+              onTaskIdentified={(result) => {
+                console.log('Voice result:', result);
+                setVoiceResults(prev => [result, ...prev].slice(0, 5)); // Keep last 5 results
+              }}
+              onError={(error) => {
+                console.error('Voice error:', error);
+              }}
+            />
+
+            {/* Voice Results History */}
+            {voiceResults.length > 0 && (
+              <div className="mt-6 space-y-2">
+                <h3 className="text-sm font-semibold text-lime-400">Senaste röstresultat / Recent Results</h3>
+                {voiceResults.map((result, index) => (
+                  <div key={index} className="p-3 bg-gray-900 rounded border border-gray-700">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs text-gray-400">
+                        {new Date().toLocaleTimeString('sv-SE')}
+                      </span>
+                      <span className={`text-xs font-medium ${result.success ? 'text-green-400' : 'text-red-400'}`}>
+                        {result.success ? '✓ Framgång' : '✗ Fel'}
+                      </span>
+                    </div>
+                    <p className="text-sm text-white">"{result.transcription.text}"</p>
+                    <div className="flex items-center space-x-3 mt-2 text-xs text-gray-400">
+                      <span>Förtroende: {(result.transcription.confidence * 100).toFixed(0)}%</span>
+                      <span>Tid: {result.processingTime}ms</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Output Panel */}
