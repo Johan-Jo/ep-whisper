@@ -5,6 +5,7 @@ import { ConversationManager } from '@/lib/conversation';
 import { ProgressIndicator } from './ProgressIndicator';
 import { ConversationHistory, ConversationMessage } from './ConversationHistory';
 import { HoldToTalkButton } from './HoldToTalkButton';
+import { VoiceConfirmation } from './VoiceConfirmation';
 import type { ConversationStep } from '@/lib/conversation/types';
 import { processVoiceInput } from '@/lib/openai/voice';
 
@@ -36,6 +37,8 @@ export function MobileVoiceLayout({ onComplete, estimate, isGeneratingEstimate }
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
   const [liveTranscript, setLiveTranscript] = useState<string>('');
+  const [pendingTranscription, setPendingTranscription] = useState<string>('');
+  const [showConfirmation, setShowConfirmation] = useState<boolean>(false);
   const recordingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   // Cleanup MediaRecorder on unmount
@@ -169,15 +172,6 @@ export function MobileVoiceLayout({ onComplete, estimate, isGeneratingEstimate }
     setIsProcessing(true);
     
     try {
-      // Add user's recording message (placeholder until we get transcription)
-      const userMessage: ConversationMessage = {
-        id: `user-${Date.now()}`,
-        role: 'user',
-        text: '🎤 Spelar in...',
-        timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, userMessage]);
-      
       // Process with Whisper
       const result = await processVoiceInput(audioBlob, {
         language: 'sv',
@@ -191,17 +185,46 @@ export function MobileVoiceLayout({ onComplete, estimate, isGeneratingEstimate }
       
       const transcription = result.transcription.text;
       
-      // Update user message with actual transcription
-      setMessages(prev =>
-        prev.map(msg =>
-          msg.id === userMessage.id
-            ? { ...msg, text: transcription }
-            : msg
-        )
-      );
+      // Show confirmation UI instead of immediately processing
+      setPendingTranscription(transcription);
+      setShowConfirmation(true);
+      
+    } catch (error) {
+      console.error('Processing error:', error);
+      
+      const errorMessage: ConversationMessage = {
+        id: `error-${Date.now()}`,
+        role: 'system',
+        text: 'Jag hörde inte riktigt. Försök igen.',
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, errorMessage]);
+      
+      if (navigator.vibrate) {
+        navigator.vibrate([100, 50, 100]); // Error pattern
+      }
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+  
+  // Handle confirmation actions
+  const handleConfirmTranscription = async () => {
+    setShowConfirmation(false);
+    setIsProcessing(true);
+    
+    try {
+      // Add user message to chat
+      const userMessage: ConversationMessage = {
+        id: `user-${Date.now()}`,
+        role: 'user',
+        text: pendingTranscription,
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, userMessage]);
       
       // Process with conversation manager
-      const response = manager.processInput(transcription);
+      const response = manager.processInput(pendingTranscription);
       
       if (response.success && response.message) {
         // Add assistant confirmation
@@ -245,22 +268,16 @@ export function MobileVoiceLayout({ onComplete, estimate, isGeneratingEstimate }
       }
       
     } catch (error) {
-      console.error('Processing error:', error);
-      
-      const errorMessage: ConversationMessage = {
-        id: `error-${Date.now()}`,
-        role: 'system',
-        text: 'Jag hörde inte riktigt. Försök igen.',
-        timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, errorMessage]);
-      
-      if (navigator.vibrate) {
-        navigator.vibrate([100, 50, 100]); // Error pattern
-      }
+      console.error('Error processing confirmed transcription:', error);
     } finally {
       setIsProcessing(false);
     }
+  };
+  
+  const handleRetryTranscription = () => {
+    setShowConfirmation(false);
+    setPendingTranscription('');
+    // User can now record again
   };
   
   return (
@@ -328,10 +345,18 @@ export function MobileVoiceLayout({ onComplete, estimate, isGeneratingEstimate }
           onStartRecording={handleStartRecording}
           onStopRecording={handleStopRecording}
           isRecording={isRecording}
-          isProcessing={isProcessing}
+          isProcessing={isProcessing || showConfirmation}
           disabled={manager.isComplete() || isGeneratingEstimate}
         />
       </div>
+      
+      {/* Voice Confirmation Modal */}
+      <VoiceConfirmation
+        transcription={pendingTranscription}
+        onConfirm={handleConfirmTranscription}
+        onRetry={handleRetryTranscription}
+        isVisible={showConfirmation}
+      />
       
       <style jsx>{`
         .mobile-voice-layout {

@@ -7,4 +7,5 @@ export { ProgressIndicator } from './ProgressIndicator';
 export { ConversationHistory } from './ConversationHistory';
 export type { ConversationMessage } from './ConversationHistory';
 export { HoldToTalkButton } from './HoldToTalkButton';
+export { VoiceConfirmation } from './VoiceConfirmation';
 
