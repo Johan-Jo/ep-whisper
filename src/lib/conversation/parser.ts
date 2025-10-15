@@ -65,7 +65,7 @@ export function parseMeasurements(transcription: string): {
     'sex': 6, 'sju': 7, 'åtta': 8, 'nio': 9, 'tio': 10,
     'elva': 11, 'tolv': 12, 'tretton': 13, 'fjorton': 14, 'femton': 15,
     'sexton': 16, 'sjutton': 17, 'arton': 18, 'nitton': 19,
-    'tjugo': 20, 'trettio': 30, 'fyrtio': 40, 'femtio': 50,
+    'tjugo': 20, 'trettio': 30, 'fyrtio': 40, 'femtio': 50, 'femti': 50,  // Add "femti" variant
     'sextio': 60, 'sjuttio': 70, 'åttio': 80, 'nittio': 90,
   };
   
@@ -75,7 +75,7 @@ export function parseMeasurements(transcription: string): {
   
   // Handle "X och Y" where it means X.Y meters (Swedish centimeters as decimals)
   // Pattern 1: "fyra och fyrtio fem" or "två och femti sju" (compound tens + units)
-  const compoundPattern = /(\d+|en|ett|två|tre|fyra|fem|sex|sju|åtta|nio)\s+och\s+(tjugo|trettio|fyrtio|femtio|sextio|sjuttio|åttio|nittio)\s*(en|ett|två|tre|fyra|fem|sex|sju|åtta|nio|\d)?/gi;
+  const compoundPattern = /(\d+|en|ett|två|tre|fyra|fem|sex|sju|åtta|nio)\s+och\s+(tjugo|trettio|fyrtio|femtio|femti|sextio|sjuttio|åttio|nittio)\s*(en|ett|två|tre|fyra|fem|sex|sju|åtta|nio|\d)?/gi;
   
   normalized = normalized.replace(compoundPattern, (match, meters, tens, units) => {
     const metersNum = numberWords[meters.toLowerCase()] || parseInt(meters) || 0;
@@ -141,6 +141,11 @@ export function parseMeasurements(transcription: string): {
         doors: 1,
         windows: 1,
       };
+    } else if (numbers.length === 1) {
+      // Single measurement (width only)
+      return {
+        width: numbers[0],
+      };
     }
   }
   
@@ -163,15 +168,26 @@ export function parseMeasurements(transcription: string): {
     result.windows = parseInt(RegExp.$2);
   }
   
-  // Fallback: first 3 numbers
-  if (!result.width && numbers.length >= 3) {
-    return {
-      width: numbers[0],
-      length: numbers[1],
-      height: numbers[2],
-      doors: numbers[3] || 1,
-      windows: numbers[4] || 1,
-    };
+  // Fallback: Use extracted numbers based on count
+  if (!result.width && numbers.length > 0) {
+    if (numbers.length >= 3) {
+      return {
+        width: numbers[0],
+        length: numbers[1],
+        height: numbers[2],
+        doors: numbers[3] || 1,
+        windows: numbers[4] || 1,
+      };
+    } else if (numbers.length === 2) {
+      return {
+        width: numbers[0],
+        length: numbers[1],
+      };
+    } else if (numbers.length === 1) {
+      return {
+        width: numbers[0],
+      };
+    }
   }
   
   return result;
