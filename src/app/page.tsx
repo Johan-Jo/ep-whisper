@@ -109,7 +109,7 @@ export default function Home() {
         {
           meps_id: 'MÅL-LIST-M',
           task_name_sv: 'Måla list',
-          unit: 'm' as const,
+          unit: 'lpm' as const, // lpm = linear meter (löpmeter)
           labor_norm_per_unit: 0.3,
           surface_type: 'list' as const,
           default_layers: 2,
