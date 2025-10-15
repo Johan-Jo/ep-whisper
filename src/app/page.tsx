@@ -204,7 +204,11 @@ export default function Home() {
                   setVoiceResults(prev => [result, ...prev].slice(0, 5)); // Keep last 5 results
                   
                   // If transcription was successful, try to generate an estimate
+                  console.log('🎤 Transcription received:', result.transcription.text);
+                  console.log('🎤 Success status:', result.success);
+                  
                   if (result.success && result.transcription.text) {
+                    console.log('🎯 Starting estimate generation...');
                     setVoiceEstimateLoading(true);
                     try {
                       // Create mock MEPS catalog for demo (in real app, this would come from Excel)
@@ -240,13 +244,19 @@ export default function Home() {
                       
                       const roomCalculation = generateRoomCalculation();
                       
+                      console.log('📊 Room calculation:', roomCalculation);
+                      console.log('📋 MEPS catalog:', mockMepsCatalog);
+                      
                       const estimateResult = await generateEstimateFromVoice({
                         transcription: result.transcription.text,
                         roomCalculation,
                         mepsCatalog: mockMepsCatalog
                       });
                       
+                      console.log('✅ Estimate result:', estimateResult);
+                      
                       const formattedEstimate = formatVoiceEstimateResult(estimateResult);
+                      console.log('📄 Formatted estimate:', formattedEstimate);
                       setVoiceEstimate(formattedEstimate);
                       
                     } catch (error) {
