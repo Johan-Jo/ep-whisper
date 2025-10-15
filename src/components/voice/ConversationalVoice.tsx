@@ -30,6 +30,16 @@ export function ConversationalVoice({ onComplete }: ConversationalVoiceProps) {
   useEffect(() => {
     // Initialize with welcome prompt
     setCurrentPrompt(manager.getCurrentPrompt());
+    
+    // Load voices (needed for some browsers)
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.getVoices();
+      
+      // Some browsers need this event to load voices
+      window.speechSynthesis.onvoiceschanged = () => {
+        window.speechSynthesis.getVoices();
+      };
+    }
   }, [manager]);
   
   const speak = async (text: string) => {
@@ -39,7 +49,25 @@ export function ConversationalVoice({ onComplete }: ConversationalVoiceProps) {
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = 'sv-SE';
         utterance.rate = 0.9;
-        utterance.pitch = 1.0;
+        utterance.pitch = 1.1; // Slightly higher pitch for more feminine sound
+        
+        // Try to find a Swedish female voice
+        const voices = window.speechSynthesis.getVoices();
+        const swedishFemaleVoice = voices.find(voice => 
+          voice.lang.startsWith('sv') && voice.name.toLowerCase().includes('female')
+        );
+        const swedishVoice = voices.find(voice => voice.lang.startsWith('sv'));
+        const anyFemaleVoice = voices.find(voice => voice.name.toLowerCase().includes('female'));
+        
+        // Prioritize: Swedish female > Swedish any > any female > default
+        if (swedishFemaleVoice) {
+          utterance.voice = swedishFemaleVoice;
+        } else if (swedishVoice) {
+          utterance.voice = swedishVoice;
+        } else if (anyFemaleVoice) {
+          utterance.voice = anyFemaleVoice;
+        }
+        
         window.speechSynthesis.speak(utterance);
         
         return new Promise<void>((resolve) => {
