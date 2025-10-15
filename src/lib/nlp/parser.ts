@@ -49,6 +49,29 @@ const PAINTING_ACTIONS = {
   'renovera': { action: 'paint', confidence: 0.7 },
 } as const;
 
+// Compound words that combine action + surface
+const COMPOUND_PATTERNS = {
+  // måla + surface compounds
+  'målarbänka': { action: 'paint', surface: 'list', confidence: 1.0 },
+  'målarbänkan': { action: 'paint', surface: 'list', confidence: 1.0 },
+  'målarstolpe': { action: 'paint', surface: 'list', confidence: 1.0 },
+  'målarstolpar': { action: 'paint', surface: 'list', confidence: 1.0 },
+  
+  // grundmåla + surface compounds
+  'grundmålatak': { action: 'prime', surface: 'tak', confidence: 1.0 },
+  'grundmålataket': { action: 'prime', surface: 'tak', confidence: 1.0 },
+  'grundmålarvägg': { action: 'prime', surface: 'vägg', confidence: 1.0 },
+  'grundmålarväggar': { action: 'prime', surface: 'vägg', confidence: 1.0 },
+  'grundmålardörr': { action: 'prime', surface: 'dörr', confidence: 1.0 },
+  'grundmålardörrar': { action: 'prime', surface: 'dörr', confidence: 1.0 },
+  
+  // täckmåla + surface compounds
+  'täckmålatak': { action: 'topcoat', surface: 'tak', confidence: 1.0 },
+  'täckmålataket': { action: 'topcoat', surface: 'tak', confidence: 1.0 },
+  'täckmålarvägg': { action: 'topcoat', surface: 'vägg', confidence: 1.0 },
+  'täckmålarväggar': { action: 'topcoat', surface: 'vägg', confidence: 1.0 },
+} as const;
+
 // Surface keywords with confidence scores
 const SURFACE_KEYWORDS = {
   // Walls
@@ -121,7 +144,32 @@ export function parseSwedishIntent(text: string): ParsedIntent {
   const parsedTasks: ParsedTask[] = [];
   let overallConfidence = 0;
   
-  // Find painting actions and their associated surfaces/quantities
+  // First, check for compound patterns (action + surface combined)
+  for (let i = 0; i < words.length; i++) {
+    const word = words[i];
+    
+    // Check if this word is a compound pattern
+    const compoundMatch = COMPOUND_PATTERNS[word as keyof typeof COMPOUND_PATTERNS];
+    if (compoundMatch) {
+      // Look for quantity in nearby words
+      const quantityMatch = findQuantityMatch(words, i);
+      
+      // Create parsed task from compound pattern
+      const task: ParsedTask = {
+        action: compoundMatch.action,
+        surface: compoundMatch.surface,
+        quantity: quantityMatch?.quantity || 1,   // Default to 1 if no quantity found
+        unit: quantityMatch?.unit || 'lager',     // Default to layers
+        confidence: compoundMatch.confidence * (quantityMatch?.confidence || 0.95)
+      };
+      
+      parsedTasks.push(task);
+      overallConfidence += task.confidence;
+      continue; // Skip to next word since we found a compound match
+    }
+  }
+  
+  // Then, find separate painting actions and their associated surfaces/quantities
   for (let i = 0; i < words.length; i++) {
     const word = words[i];
     

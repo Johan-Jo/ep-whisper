@@ -93,6 +93,30 @@ export default function Home() {
           synonyms: 'måla tak;måla taket;takmålning;täckmåla tak'
         },
         {
+          meps_id: 'GRUND-TAK-M2',
+          task_name_sv: 'Grundmåla tak',
+          unit: 'm2' as const,
+          labor_norm_per_unit: 0.35,
+          surface_type: 'tak' as const,
+          default_layers: 1,
+          material_factor_per_unit: 1.0,
+          price_labor_per_hour: 450,
+          price_material_per_unit: 40,
+          synonyms: 'grundmåla tak;grundmåla taket;grundmålning tak'
+        },
+        {
+          meps_id: 'MÅL-LIST-M',
+          task_name_sv: 'Måla list',
+          unit: 'm' as const,
+          labor_norm_per_unit: 0.3,
+          surface_type: 'list' as const,
+          default_layers: 2,
+          material_factor_per_unit: 0.8,
+          price_labor_per_hour: 450,
+          price_material_per_unit: 25,
+          synonyms: 'måla list;måla listen;måla lister;målarbänka;målarstolpe'
+        },
+        {
           meps_id: 'MÅL-DÖRR-ST',
           task_name_sv: 'Måla dörr',
           unit: 'st' as const,
