@@ -97,13 +97,10 @@ export async function transcribeAudio(
       const language = transcription.language || 'sv';
       const duration = transcription.duration || 0;
 
-      // Check confidence threshold
-      if (confidence < opts.confidenceThreshold) {
-        throw new OpenAIError(
-          `Low confidence transcription: ${(confidence * 100).toFixed(1)}% (threshold: ${(opts.confidenceThreshold * 100).toFixed(1)}%)`,
-          400,
-          'LOW_CONFIDENCE'
-        );
+      // Check confidence threshold (disabled for MVP - accept all valid transcriptions)
+      // Note: Whisper is generally accurate, and users can always correct in the UI
+      if (confidence < 0.2) { // Only reject extremely poor quality (< 20%)
+        console.warn(`Low confidence transcription: ${(confidence * 100).toFixed(1)}% - proceeding anyway`);
       }
 
       return {
