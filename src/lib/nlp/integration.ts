@@ -6,7 +6,8 @@
  */
 
 import { parseSwedishIntent, validateParsedIntent, formatParsedIntent, type ParsedIntent } from './parser';
-import { mapSpokenTaskToMeps, calculateUnitPrice } from '@/lib/pricing/mapper';
+import { mapSpokenTaskToMeps } from '@/lib/pricing/mapper';
+import { calculateUnitPrice } from '@/lib/pricing/calculator';
 import { type RoomCalculation, type MepsRow, type LineItem } from '@/lib/types';
 import { type VoiceProcessingResult } from '@/lib/openai';
 import { MepsCatalog } from '@/lib/excel/catalog';
