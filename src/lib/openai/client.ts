@@ -24,13 +24,20 @@ export const getOpenAIClient = (): OpenAI => {
   }
   
   if (!openaiClient) {
-    openaiClient = new OpenAI({
+    const config: any = {
       apiKey,
       dangerouslyAllowBrowser: true, // Allow usage in browser for client-side calls
-      defaultHeaders: {
-        'OpenAI-Organization': process.env.NEXT_PUBLIC_OPENAI_ORG_ID,
-      },
-    });
+    };
+    
+    // Only add organization header if it's provided
+    const orgId = process.env.NEXT_PUBLIC_OPENAI_ORG_ID || process.env.OPENAI_ORG_ID;
+    if (orgId) {
+      config.defaultHeaders = {
+        'OpenAI-Organization': orgId,
+      };
+    }
+    
+    openaiClient = new OpenAI(config);
   }
   
   return openaiClient;
