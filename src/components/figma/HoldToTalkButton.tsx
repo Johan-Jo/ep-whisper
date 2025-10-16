@@ -54,7 +54,7 @@ export function HoldToTalkButton({ state, onPress, onRelease }: HoldToTalkButton
   };
 
   return (
-    <div className="sticky bottom-0 p-6 bg-card/80 backdrop-blur-xl border-t border-border">
+    <div className="sticky bottom-0 p-4 bg-card/80 backdrop-blur-xl border-t border-border">
       <div className="flex flex-col items-center gap-4">
         <motion.button
           animate={{ 

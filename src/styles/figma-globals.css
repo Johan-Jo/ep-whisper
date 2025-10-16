@@ -19,7 +19,7 @@ html, body {
   height: 100dvh;
   /* Respect iOS safe areas so top banner is visible (mobile only) */
   padding-top: env(safe-area-inset-top);
-  padding-bottom: calc(env(safe-area-inset-bottom) + 16px);
+  padding-bottom: calc(env(safe-area-inset-bottom) + 10px);
 }
 
 /* Helper class if needed for explicit safe padding */
