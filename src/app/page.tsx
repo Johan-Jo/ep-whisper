@@ -545,7 +545,7 @@ Giltig i 30 dagar.`;
   return (
     <div className="dark app-container bg-gradient-to-br from-background via-background to-muted/20">
       <div className="w-full max-w-md mx-auto p-4">
-        <div className="bg-card/50 backdrop-blur-xl border border-border rounded-3xl shadow-2xl overflow-hidden" style={{ height: '100%', maxHeight: '100dvh' }}>
+        <div className="bg-card/50 backdrop-blur-xl border border-border rounded-3xl shadow-2xl overflow-hidden" style={{ minHeight: '100dvh' }}>
           <div className="h-full flex flex-col">
             <ProgressHeader currentStep={getCurrentStep()} totalSteps={5} />
             
