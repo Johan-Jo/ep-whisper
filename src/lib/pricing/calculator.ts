@@ -1,4 +1,5 @@
 import { MepsRow, LineItem, EstimateTotals } from '../types';
+import { MepsCatalog } from '../excel/catalog';
 
 export interface PricingConfig {
   labor_price_per_hour: number; // Default: 500 SEK
@@ -180,5 +181,51 @@ export function groupLineItemsBySection(lineItems: LineItem[], catalog: MepsCata
   }
 
   return grouped;
+}
+
+/**
+ * Calculate section totals for grouped line items
+ */
+export function calculateSectionTotals(
+  groupedItems: { [key in keyof typeof SWEDISH_SECTIONS]: LineItem[] }
+): { [key in keyof typeof SWEDISH_SECTIONS]: number } {
+  return {
+    PREP: groupedItems.PREP.reduce((sum, item) => sum + item.subtotal, 0),
+    PAINT: groupedItems.PAINT.reduce((sum, item) => sum + item.subtotal, 0),
+    FINISH: groupedItems.FINISH.reduce((sum, item) => sum + item.subtotal, 0),
+  };
+}
+
+/**
+ * ROT-avdrag note for Swedish tax deduction
+ * ROT = Reparation, Ombyggnad, Tillbyggnad (Repairs, Renovation, Extension)
+ */
+export const ROT_NOTE_SV = {
+  title: 'ROT-avdrag',
+  description: 'Med ROT-avdrag kan du få tillbaka 30% av arbetskostnaden (max 50 000 kr per person och år). Kontakta Skatteverket för mer information om ditt ROT-avdrag.',
+  disclaimer: 'ROT-avdrag beräknas inte automatiskt i denna offert. Kontakta din revisor eller Skatteverket för exakt beräkning.',
+} as const;
+
+/**
+ * Calculate potential ROT deduction (informational only)
+ * ROT allows 30% deduction of labor costs, max 50,000 SEK per person per year
+ */
+export function calculateRotPotential(laborTotal: number): {
+  eligible_amount: number;
+  deduction_rate: number;
+  max_deduction: number;
+  potential_deduction: number;
+} {
+  const ROT_RATE = 0.30; // 30%
+  const ROT_MAX = 50000; // 50,000 SEK per person per year
+  
+  const potentialDeduction = Math.min(laborTotal * ROT_RATE, ROT_MAX);
+
+  return {
+    eligible_amount: laborTotal,
+    deduction_rate: ROT_RATE,
+    max_deduction: ROT_MAX,
+    potential_deduction: Math.round(potentialDeduction * 100) / 100,
+  };
 }
 

@@ -7,7 +7,6 @@ export type ConversationStep =
   | 'project_name'
   | 'room_measurements'
   | 'tasks'
-  | 'confirmation'
   | 'complete';
 
 export interface ConversationState {
@@ -36,7 +35,7 @@ export interface ConversationPrompt {
 
 export const CONVERSATION_PROMPTS: Record<ConversationStep, ConversationPrompt> = {
   client_name: {
-    question: 'Hej och välkommen till EP-Whisper! Här kan du skapa supersnabba målningsofferter genom att bara prata med vår storpattade sekreterare Ursula. Vi börjar med att fråga: Vad heter kunden?',
+    question: 'Vad heter din kund?',
     expectedInput: 'client name',
   },
   project_name: {
@@ -58,12 +57,8 @@ export const CONVERSATION_PROMPTS: Record<ConversationStep, ConversationPrompt> 
     },
   },
   tasks: {
-    question: 'Perfekt! Nu kan du berätta vilka målningsarbeten som ska göras. Säg en uppgift i taget, till exempel "måla väggar två lager" eller "grundmåla tak". Säg "klar" när du är färdig.',
+    question: 'Perfekt! Nu kan du berätta vilka målningsarbeten som ska göras. Säg en uppgift i taget, till exempel "måla väggar två lager" eller "grundmåla tak".',
     expectedInput: 'painting tasks one at a time',
-  },
-  confirmation: {
-    question: 'Vill du granska offerten? Säg "ja" för att se resultatet, eller "lägg till" för fler uppgifter.',
-    expectedInput: 'confirmation',
   },
   complete: {
     question: 'Din offert är klar! Du kan nu exportera den som PDF.',

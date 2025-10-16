@@ -72,7 +72,13 @@ export async function transcribeAudio(
         );
       }
       
-      const audioFile = new File([buffer], `audio.${audioFormat.extension}`, { type: audioFormat.mimeType });
+      // Force WebM format for browser recordings
+      const finalMimeType = audioFormat.mimeType === 'audio/webm' ? 'audio/webm' : audioFormat.mimeType;
+      const finalExtension = audioFormat.extension === 'webm' ? 'webm' : audioFormat.extension;
+      
+      console.log(`[Attempt ${attempt}] Using final format: ${finalMimeType}, extension: ${finalExtension}`);
+      
+      const audioFile = new File([buffer], `audio.${finalExtension}`, { type: finalMimeType });
       
       // Additional validation
       console.log(`[Attempt ${attempt}] File object created:`, {
@@ -259,6 +265,11 @@ function detectAudioFormat(buffer: Buffer): { mimeType: string; extension: strin
   // Check for common audio file headers
   const header = buffer.toString('hex', 0, Math.min(8, buffer.length));
   
+  // WebM detection (EBML header)
+  if (header.startsWith('1a45dfa3')) {
+    return { mimeType: 'audio/webm', extension: 'webm' };
+  }
+  
   if (header.startsWith('52494646')) {
     // RIFF header - could be WAV or WebM
     const subheader = buffer.toString('hex', 8, 12);
@@ -306,9 +317,11 @@ export function validateAudioBuffer(audioBuffer: Buffer | ArrayBuffer): void {
   const header = buffer.toString('hex', 0, Math.min(8, buffer.length));
   const hasAudioHeader = buffer.length > 4 && (
     header.startsWith('52494646') || // RIFF (WAV)
-    header.startsWith('1a45dfa3') || // WebM (EBML)
+    header.startsWith('1a45dfa3') || // WebM (EBML) - most common for browser recording
     header.startsWith('fffb') ||     // MP3
-    header.startsWith('00000020')    // MP4
+    header.startsWith('fffa') ||     // MP3
+    header.startsWith('00000020') || // MP4
+    header.startsWith('4f676753')    // OGG
   );
 
   if (!hasAudioHeader) {

@@ -23,17 +23,56 @@ export function PDFExportButton({
     setError(null);
 
     try {
-      // Generate PDF
-      const pdf = generateEstimatePDF(data);
+      // Simple text export for now
+      const textContent = `
+EP-WHISPER OFFERT
+━━━━━━━━━━━━━━━━━━━━━━━
+
+KUND: ${data.customerName || 'Ej angiven'}
+PROJEKT: ${data.projectName || 'Ej angivet'}
+RUM: ${data.roomName}
+
+DATUM: ${data.date.toLocaleDateString('sv-SE')}
+
+MÅTT:
+- Väggar (brutto): ${data.geometry.walls_gross.toFixed(1)} m²
+- Väggar (netto): ${data.geometry.walls_net.toFixed(1)} m²
+- Tak: ${data.geometry.ceiling_gross.toFixed(1)} m²
+
+ARBETSUPPGIFTER:
+${data.lineItems.map((item, i) => 
+  `${i + 1}. ${item.name} (${item.qty.toFixed(1)} ${item.unit})`
+).join('\n')}
+
+KOSTNADER:
+${data.lineItems.map(item => 
+  `- ${item.name}: ${item.subtotal.toFixed(0)} kr`
+).join('\n')}
+
+━━━━━━━━━━━━━━━━━━━━━━━
+DELSUMMA:        ${data.subtotal.toFixed(0)} kr
+PÅLÄGG (${data.markupPercent}%):    ${data.markup.toFixed(0)} kr
+━━━━━━━━━━━━━━━━━━━━━━━
+TOTALT:          ${data.total.toFixed(0)} kr
+
+Giltig i 30 dagar.
+      `;
       
-      // Download
-      pdf.save(filename);
+      // Create and download text file
+      const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename.replace('.pdf', '.txt');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
       
-      // Success feedback (optional: could add toast notification)
-      console.log('✅ PDF generated successfully');
+      console.log('✅ File exported successfully');
     } catch (err) {
-      console.error('❌ PDF generation failed:', err);
-      setError('Kunde inte generera PDF. Försök igen.');
+      console.error('❌ Export failed:', err);
+      setError('Kunde inte exportera fil. Försök igen.');
     } finally {
       setIsGenerating(false);
     }
@@ -76,7 +115,7 @@ export function PDFExportButton({
                 d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" 
               />
             </svg>
-            <span>Exportera som PDF</span>
+            <span>Exportera som fil</span>
           </>
         )}
       </button>

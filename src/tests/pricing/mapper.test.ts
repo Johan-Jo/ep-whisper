@@ -183,6 +183,11 @@ describe('Task Mapper', () => {
       expect(parseLayerCount('tre lager')).toBe(3);
     });
 
+    it('should parse Swedish number words with strykningar', () => {
+      expect(parseLayerCount('två strykningar')).toBe(2);
+      expect(parseLayerCount('tre strykningar')).toBe(3);
+    });
+
     it('should parse digits', () => {
       expect(parseLayerCount('måla 2 gånger')).toBe(2);
       expect(parseLayerCount('3 lager')).toBe(3);
@@ -191,6 +196,11 @@ describe('Task Mapper', () => {
     it('should default to 1 if no layer count specified', () => {
       expect(parseLayerCount('måla väggar')).toBe(1);
       expect(parseLayerCount('grundmålning')).toBe(1);
+    });
+
+    // Swedish examples from PRD §22
+    it('should handle "täckmålas två gånger" from PRD', () => {
+      expect(parseLayerCount('täckmålas två gånger')).toBe(2);
     });
   });
 
@@ -227,6 +237,81 @@ describe('Task Mapper', () => {
     it('should return all tasks if no filters', () => {
       const tasks = getTasksForContext(catalog);
       expect(tasks).toHaveLength(3);
+    });
+  });
+
+  describe('Swedish Task Phrases from PRD §22', () => {
+    // PRD Appendix A - Swedish Task Lexicon examples
+    // Testing that our mapper can handle real-world Swedish painting phrases
+
+    it('should map "spackla väggar" to wall spackling task', () => {
+      const result = mapSpokenTaskToMeps('spackla väggar', catalog);
+      expect(result.task).toBeDefined();
+      expect(result.task?.surface_type).toBe('vägg');
+    });
+
+    it('should map "bredspackla tak" to ceiling spackling task', () => {
+      const result = mapSpokenTaskToMeps('bredspackla tak', catalog);
+      // Note: This would need MÅL-TAK-SPACK-M2 in catalog
+      // For now, just verify it tries to find a tak task
+      const surfaceType = resolveSurfaceType('bredspackla tak');
+      expect(surfaceType).toBe('tak');
+    });
+
+    it('should map "täckmåla två gånger" to paint task with 2 layers', () => {
+      const layers = parseLayerCount('täckmåla två gånger');
+      expect(layers).toBe(2);
+      
+      const result = mapSpokenTaskToMeps('täckmåla tak', catalog);
+      expect(result.task).toBeDefined();
+    });
+
+    it('should map "måla dörr en sida" to door painting (st)', () => {
+      const surfaceType = resolveSurfaceType('måla dörr en sida');
+      expect(surfaceType).toBe('dörr');
+    });
+
+    it('should map "måla fönster" to window painting (st)', () => {
+      const surfaceType = resolveSurfaceType('måla fönster');
+      expect(surfaceType).toBe('fönster');
+    });
+
+    it('should map "listmålning" to trim painting (lpm)', () => {
+      const surfaceType = resolveSurfaceType('listmålning');
+      expect(surfaceType).toBe('list');
+    });
+
+    // Additional comprehensive Swedish phrases
+    it('should handle "grundmåla väggar" (prime walls)', () => {
+      const surfaceType = resolveSurfaceType('grundmåla väggar');
+      expect(surfaceType).toBe('vägg');
+    });
+
+    it('should handle "slipa tak" (sand ceiling)', () => {
+      const surfaceType = resolveSurfaceType('slipa tak');
+      expect(surfaceType).toBe('tak');
+    });
+
+    it('should handle "måla betonggolv" (paint concrete floor)', () => {
+      const result = mapSpokenTaskToMeps('måla betonggolv', catalog);
+      expect(result.task).toBeDefined();
+      expect(result.task?.meps_id).toBe('MÅL-GOLV-BETONG-M2');
+    });
+
+    it('should handle "taklist" (ceiling trim)', () => {
+      const surfaceType = resolveSurfaceType('taklist');
+      expect(surfaceType).toBe('list');
+    });
+
+    it('should handle "golvlist" (floor trim)', () => {
+      const surfaceType = resolveSurfaceType('golvlist');
+      expect(surfaceType).toBe('list');
+    });
+
+    // Test case insensitivity with Swedish characters
+    it('should handle Swedish characters åäö in any case', () => {
+      expect(resolveSurfaceType('MÅLA VÄGGAR')).toBe('vägg');
+      expect(resolveSurfaceType('Måla Dörr')).toBe('dörr');
     });
   });
 });

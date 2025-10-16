@@ -429,7 +429,7 @@ function parsePaintingTasksInText(text: string): string[] {
 /**
  * Validate if a task is a legitimate painting task
  */
-function isValidPaintingTask(task: string): boolean {
+export function isValidPaintingTask(task: string): boolean {
   const validTasks = [
     'måla väggar', 'måla tak', 'måla dörrar', 'måla fönster', 'måla golv', 'måla lister', 'måla radiatorer',
     'grundmåla väggar', 'grundmåla tak', 'grundmåla dörrar', 'grundmåla fönster', 'grundmåla golv',

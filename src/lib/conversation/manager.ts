@@ -10,7 +10,8 @@ import {
   isDone, 
   wantsToAddMore,
   isConfirmation,
-  parsePaintingTasks 
+  parsePaintingTasks,
+  isValidPaintingTask
 } from './parser';
 import { perfMonitor } from '../monitoring/performance';
 
@@ -78,9 +79,6 @@ export class ConversationManager {
       
       case 'tasks':
         return this.handleTasks(text);
-      
-      case 'confirmation':
-        return this.handleConfirmation(text);
       
       default:
         return {
@@ -185,11 +183,11 @@ export class ConversationManager {
         };
       }
       
-      this.state.step = 'confirmation';
+      this.state.step = 'complete';
       return {
         success: true,
         message: `${this.state.tasks.length} uppgifter tillagda.`,
-        nextPrompt: CONVERSATION_PROMPTS['confirmation'].question,
+        nextPrompt: CONVERSATION_PROMPTS['complete'].question,
       };
     }
     
@@ -197,17 +195,27 @@ export class ConversationManager {
     const parsedTasks = parsePaintingTasks(text);
     
     if (parsedTasks.length === 0) {
-      // If no tasks were parsed, treat the whole input as a task
-      this.state.tasks.push({
-        phrase: text,
-        transcription: text,
-      });
-      
-      return {
-        success: true,
-        message: `Lade till: ${text}. Fortsätt eller säg "klar".`,
-        nextPrompt: 'Nästa uppgift? Eller säg "klar" om du är färdig.',
-      };
+      // Check if the whole text might be a valid painting task
+      if (isValidPaintingTask(text)) {
+        this.state.tasks.push({
+          phrase: text,
+          transcription: text,
+        });
+        
+        return {
+          success: true,
+          message: `Lade till: ${text}. Vill du granska offerten eller lägga till fler arbeten?`,
+          nextPrompt: null,
+        };
+      } else {
+        // Invalid painting task - ask for clarification
+        return {
+          success: false,
+          message: `"${text}" verkar inte vara en giltig målningsuppgift. Kan du berätta mer specifikt vilka målningsarbeten du vill ha gjorda? Till exempel "måla väggar", "grundmåla tak" eller "täckmåla dörrar".`,
+          nextPrompt: CONVERSATION_PROMPTS['tasks'].question,
+          error: 'Invalid painting task',
+        };
+      }
     }
     
     // Add all parsed tasks
@@ -221,40 +229,11 @@ export class ConversationManager {
     const taskList = parsedTasks.join(', ');
     return {
       success: true,
-      message: `Lade till: ${taskList}. Fortsätt eller säg "klar".`,
-      nextPrompt: 'Nästa uppgift? Eller säg "klar" om du är färdig.',
+      message: `Lade till: ${taskList}. Vill du granska offerten eller lägga till fler arbeten?`,
+      nextPrompt: null,
     };
   }
   
-  /**
-   * Handle confirmation step
-   */
-  private handleConfirmation(text: string): any {
-    if (wantsToAddMore(text)) {
-      this.state.step = 'tasks';
-      return {
-        success: true,
-        message: 'Ok, lägg till fler uppgifter.',
-        nextPrompt: CONVERSATION_PROMPTS['tasks'].question,
-      };
-    }
-    
-    if (isConfirmation(text)) {
-      this.state.step = 'complete';
-      return {
-        success: true,
-        message: 'Genererar offert...',
-        nextPrompt: CONVERSATION_PROMPTS['complete'].question,
-      };
-    }
-    
-    return {
-      success: false,
-      message: 'Säg "ja" för att fortsätta eller "lägg till" för fler uppgifter.',
-      nextPrompt: CONVERSATION_PROMPTS['confirmation'].question,
-      error: 'Unclear confirmation',
-    };
-  }
   
   /**
    * Check if conversation is complete

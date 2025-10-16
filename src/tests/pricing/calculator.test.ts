@@ -5,7 +5,10 @@ import {
   calculateDetailedTotals,
   getTaskSection,
   groupLineItemsBySection,
+  calculateSectionTotals,
+  calculateRotPotential,
   SWEDISH_SECTIONS,
+  ROT_NOTE_SV,
 } from '../../lib/pricing/calculator';
 import { MepsRow, LineItem } from '../../lib/types';
 import { MepsCatalog } from '../../lib/excel/catalog';
@@ -233,6 +236,93 @@ describe('Pricing Calculator', () => {
       expect(grouped.PREP).toHaveLength(1);
       expect(grouped.PAINT).toHaveLength(1);
       expect(grouped.FINISH).toHaveLength(0);
+    });
+  });
+
+  describe('calculateSectionTotals', () => {
+    it('should calculate totals for each section', () => {
+      const groupedItems = {
+        PREP: [
+          { meps_id: 'PREP-001', name: 'Spackla', unit: 'm2', qty: 10, unit_price: 50, subtotal: 500 },
+          { meps_id: 'PREP-002', name: 'Slipa', unit: 'm2', qty: 10, unit_price: 30, subtotal: 300 },
+        ],
+        PAINT: [
+          { meps_id: 'PAINT-001', name: 'Måla', unit: 'm2', qty: 10, unit_price: 40, subtotal: 400 },
+        ],
+        FINISH: [] as LineItem[],
+      };
+
+      const totals = calculateSectionTotals(groupedItems);
+
+      expect(totals.PREP).toBe(800); // 500 + 300
+      expect(totals.PAINT).toBe(400);
+      expect(totals.FINISH).toBe(0);
+    });
+
+    it('should handle empty sections', () => {
+      const groupedItems = {
+        PREP: [] as LineItem[],
+        PAINT: [] as LineItem[],
+        FINISH: [] as LineItem[],
+      };
+
+      const totals = calculateSectionTotals(groupedItems);
+
+      expect(totals.PREP).toBe(0);
+      expect(totals.PAINT).toBe(0);
+      expect(totals.FINISH).toBe(0);
+    });
+  });
+
+  describe('ROT-avdrag (Swedish tax deduction)', () => {
+    it('should have correct ROT note text in Swedish', () => {
+      expect(ROT_NOTE_SV.title).toBe('ROT-avdrag');
+      expect(ROT_NOTE_SV.description).toContain('30%');
+      expect(ROT_NOTE_SV.description).toContain('50 000 kr');
+      expect(ROT_NOTE_SV.disclaimer).toContain('Skatteverket');
+    });
+
+    describe('calculateRotPotential', () => {
+      it('should calculate 30% of labor cost', () => {
+        const laborTotal = 10000; // 10,000 SEK
+        const rot = calculateRotPotential(laborTotal);
+
+        expect(rot.eligible_amount).toBe(10000);
+        expect(rot.deduction_rate).toBe(0.30);
+        expect(rot.potential_deduction).toBe(3000); // 30% of 10,000
+      });
+
+      it('should cap at 50,000 SEK max deduction', () => {
+        const laborTotal = 200000; // 200,000 SEK (high labor cost)
+        const rot = calculateRotPotential(laborTotal);
+
+        // 30% of 200,000 = 60,000, but capped at 50,000
+        expect(rot.potential_deduction).toBe(50000);
+        expect(rot.max_deduction).toBe(50000);
+      });
+
+      it('should handle small labor amounts', () => {
+        const laborTotal = 1000; // 1,000 SEK
+        const rot = calculateRotPotential(laborTotal);
+
+        expect(rot.potential_deduction).toBe(300); // 30% of 1,000
+      });
+
+      it('should round to 2 decimal places', () => {
+        const laborTotal = 12345.678;
+        const rot = calculateRotPotential(laborTotal);
+
+        // 30% of 12345.678 = 3703.7034
+        expect(rot.potential_deduction).toBe(3703.70);
+        expect(rot.potential_deduction.toString().split('.')[1]?.length || 0).toBeLessThanOrEqual(2);
+      });
+
+      it('should handle exactly at max threshold', () => {
+        const laborTotal = 166666.67; // Exactly at 50,000 deduction threshold
+        const rot = calculateRotPotential(laborTotal);
+
+        expect(rot.potential_deduction).toBe(50000);
+      });
     });
   });
 });
