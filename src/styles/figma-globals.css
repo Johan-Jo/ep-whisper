@@ -17,14 +17,22 @@ html, body {
   /* Use dynamic viewport units to include iOS UI chrome */
   min-height: 100dvh;
   height: 100dvh;
-  /* Respect iOS safe areas so top banner is visible */
+  /* Respect iOS safe areas so top banner is visible (mobile only) */
   padding-top: env(safe-area-inset-top);
-  padding-bottom: calc(env(safe-area-inset-bottom) + 16px);
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 /* Helper class if needed for explicit safe padding */
 .safe-top {
   padding-top: env(safe-area-inset-top);
+}
+
+/* On larger screens, remove extra safe-area padding to avoid clipping */
+@media (min-width: 768px) {
+  .app-container {
+    padding-top: 0;
+    padding-bottom: 0;
+  }
 }
 
 :root {
