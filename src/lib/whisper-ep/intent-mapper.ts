@@ -3,14 +3,10 @@
  * Following the cursor guide specifications
  */
 
-import OpenAI from 'openai';
+import { getOpenAIClient } from '../openai/client';
 import { ADD_TASK_SCHEMA, COMPOSE_JOB_SCHEMA, AddTaskResult, ComposeJobResult } from './schemas';
 import { SINGLE_INTENT_PROMPT, COMPOSITE_PROMPT } from './prompts';
 import { extractSlots, normalizeSlotValues } from './slot-extractor';
-
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || process.env.NEXT_PUBLIC_OPENAI_API_KEY
-});
 
 export interface IntentMappingOptions {
   useComposite?: boolean;
@@ -48,7 +44,7 @@ export async function mapToSingleIntent(
       { role: "user" as const, content: `Fras: "${text}"\nExtrakterade slots: ${JSON.stringify(normalizedSlots)}` }
     ];
     
-    const response = await client.chat.completions.create({
+    const response = await getOpenAIClient().chat.completions.create({
       model: "gpt-4o-mini", // Using available model
       temperature: options.temperature || 0.1,
       seed: options.seed,
@@ -84,7 +80,7 @@ export async function mapToCompositeJob(
       { role: "user" as const, content: `Fras: "${text}"` }
     ];
     
-    const response = await client.chat.completions.create({
+    const response = await getOpenAIClient().chat.completions.create({
       model: "gpt-4o-mini",
       temperature: options.temperature || 0.1,
       seed: options.seed,

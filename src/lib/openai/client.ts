@@ -31,10 +31,21 @@ export const getOpenAIClient = (): OpenAI => {
     
     // Only add organization header if it's provided
     const orgId = process.env.NEXT_PUBLIC_OPENAI_ORG_ID || process.env.OPENAI_ORG_ID;
+    console.log('🔍 [OpenAI] Organization ID check:', { 
+      NEXT_PUBLIC_OPENAI_ORG_ID: process.env.NEXT_PUBLIC_OPENAI_ORG_ID,
+      OPENAI_ORG_ID: process.env.OPENAI_ORG_ID,
+      orgId: orgId,
+      NODE_ENV: process.env.NODE_ENV,
+      allEnvKeys: Object.keys(process.env).filter(key => key.includes('OPENAI') || key.includes('ORG'))
+    });
+    
     if (orgId) {
+      console.log('⚠️ [OpenAI] Adding organization header:', orgId);
       config.defaultHeaders = {
         'OpenAI-Organization': orgId,
       };
+    } else {
+      console.log('✅ [OpenAI] No organization header - using personal API key');
     }
     
     openaiClient = new OpenAI(config);
