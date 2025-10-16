@@ -198,9 +198,29 @@ export default function Home() {
       console.log(`📡 Response status: ${response.status} ${response.statusText}`);
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('❌ API error:', errorData);
-        throw new Error(errorData.error || `Transcription failed: ${response.statusText}`);
+        // Try to parse JSON first; if it fails, read raw text for better diagnostics
+        let errorData: any = null;
+        let rawText = '';
+        try {
+          errorData = await response.json();
+        } catch (_) {
+          try {
+            rawText = await response.text();
+          } catch (_) {
+            // ignore
+          }
+        }
+
+        console.error('❌ API error:', {
+          status: response.status,
+          statusText: response.statusText,
+          json: errorData,
+          raw: rawText?.slice(0, 500)
+        });
+        const message = (errorData && (errorData.error || errorData.message))
+          || rawText
+          || `Transcription failed: ${response.status} ${response.statusText}`;
+        throw new Error(message);
       }
 
       const data = await response.json();
@@ -523,9 +543,9 @@ Giltig i 30 dagar.`;
   };
 
   return (
-    <div className="dark app-container bg-gradient-to-br from-background via-background to-muted/20">
+    <div className="dark app-container bg-gradient-to-br from-background via-background to-muted/20 safe-top">
       <div className="w-full max-w-md mx-auto p-4">
-        <div className="bg-card/50 backdrop-blur-xl border border-border rounded-3xl shadow-2xl overflow-hidden" style={{ height: '100vh', maxHeight: '100vh' }}>
+        <div className="bg-card/50 backdrop-blur-xl border border-border rounded-3xl shadow-2xl overflow-hidden" style={{ height: '100dvh', maxHeight: '100dvh' }}>
           <div className="h-full flex flex-col">
             <ProgressHeader currentStep={getCurrentStep()} totalSteps={5} />
             

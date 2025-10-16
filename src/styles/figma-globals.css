@@ -5,15 +5,26 @@
 /* Prevent mobile auto-scroll */
 html, body {
   overflow-x: hidden;
-  position: fixed;
+  /* Avoid iOS Safari auto-jumps and account for safe areas */
   width: 100%;
   height: 100%;
+  overscroll-behavior: contain;
 }
 
 /* Allow scrolling within the app container */
 .app-container {
   overflow-y: auto;
-  height: 100vh;
+  /* Use dynamic viewport units to include iOS UI chrome */
+  min-height: 100dvh;
+  height: 100dvh;
+  /* Respect iOS safe areas so top banner is visible */
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: calc(env(safe-area-inset-bottom) + 16px);
+}
+
+/* Helper class if needed for explicit safe padding */
+.safe-top {
+  padding-top: env(safe-area-inset-top);
 }
 
 :root {
