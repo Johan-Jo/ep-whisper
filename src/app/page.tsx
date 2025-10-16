@@ -543,51 +543,63 @@ Giltig i 30 dagar.`;
   };
 
   return (
-    <div className="dark app-container bg-gradient-to-br from-background via-background to-muted/20">
-      <div className="w-full max-w-md mx-auto p-4">
-        <div className="bg-card/50 backdrop-blur-xl border border-border rounded-3xl shadow-2xl overflow-hidden" style={{ minHeight: '100dvh' }}>
-          <div className="h-full flex flex-col">
-            <ProgressHeader currentStep={getCurrentStep()} totalSteps={5} />
-            
-            <ConversationArea 
-              messages={messages}
-              showConfirmationButtons={showConfirmationButtons}
-              onReviewEstimate={handleReviewEstimate}
-              onAddMoreTasks={handleAddMoreTasks}
-            />
-            
+    <div className="dark app-container bg-gradient-to-br from-[rgba(10,10,10,1)] via-[rgba(10,10,10,1)] to-[rgba(38,38,38,0.2)] flex items-center justify-center">
+      <div className="w-full max-w-[448px] h-[800px] mx-auto">
+        <div 
+          className="bg-[rgba(10,10,10,0.5)] border border-neutral-800 rounded-[24px] shadow-2xl overflow-hidden h-full flex flex-col"
+          style={{ 
+            backdropFilter: 'blur(40px)',
+            WebkitBackdropFilter: 'blur(40px)'
+          }}
+        >
+          {/* Sticky Header */}
+          <ProgressHeader currentStep={getCurrentStep()} totalSteps={5} />
+          
+          {/* Scrollable Conversation Area */}
+          <ConversationArea 
+            messages={messages}
+            showConfirmationButtons={showConfirmationButtons}
+            onReviewEstimate={handleReviewEstimate}
+            onAddMoreTasks={handleAddMoreTasks}
+          />
+          
+          {/* Status Area - if needed */}
+          {estimate && statusState !== 'complete' && (
             <StatusArea 
               status={statusState}
               transcript={isRecording ? 'Spelar in...' : transcript}
               estimate={estimate}
             />
-            
-            {pdfData && statusState === 'complete' && (
-              <div className="px-6 pb-4">
-                      <PDFExportButton 
-                        data={pdfData}
-                        filename={`offert-${pdfData.roomName.toLowerCase().replace(/\s+/g, '-')}.pdf`}
-                      />
-                    </div>
-                  )}
-            
-            {statusState === 'complete' ? (
-              <div className="px-6 pb-8">
-                <button
-                  onClick={handleCreateNewEstimate}
-                  className="w-full bg-gradient-to-r from-chart-1 to-chart-2 text-white rounded-2xl py-4 px-6 text-center font-medium text-lg shadow-lg hover:shadow-xl transition-all duration-200 active:scale-95"
-                >
-                  Skapa ny offert
-                </button>
-                </div>
-              ) : (
-              <HoldToTalkButton
-                state={buttonState}
-                onPress={handlePress}
-                onRelease={handleRelease}
+          )}
+          
+          {/* PDF Export Button */}
+          {pdfData && statusState === 'complete' && (
+            <div className="px-6 pb-4">
+              <PDFExportButton 
+                data={pdfData}
+                filename={`offert-${pdfData.roomName.toLowerCase().replace(/\s+/g, '-')}.pdf`}
               />
-              )}
-          </div>
+            </div>
+          )}
+          
+          {/* Bottom Button Area - Fixed */}
+          {statusState === 'complete' ? (
+            <div className="px-6 pb-6 pt-4 bg-[rgba(10,10,10,0.8)] backdrop-blur-xl border-t border-neutral-800">
+              <button
+                onClick={handleCreateNewEstimate}
+                className="w-full bg-gradient-to-r from-chart-1 to-chart-2 text-neutral-900 rounded-2xl py-4 px-6 text-center font-bold text-lg shadow-lg hover:shadow-xl transition-all duration-200 active:scale-95"
+                style={{ fontFamily: 'Arimo, sans-serif' }}
+              >
+                Skapa ny offert
+              </button>
+            </div>
+          ) : (
+            <HoldToTalkButton
+              state={buttonState}
+              onPress={handlePress}
+              onRelease={handleRelease}
+            />
+          )}
         </div>
       </div>
       

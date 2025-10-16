@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { calculateRoom } from '@/lib/geometry';
-import { RoomGeometry } from '@/lib/types';
+import { RoomGeometry, RoomCalculation, MepsRow, LineItem } from '@/lib/types';
 
 interface EstimateRequest {
   geometry: RoomGeometry;

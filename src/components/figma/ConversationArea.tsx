@@ -40,7 +40,7 @@ export function ConversationArea({
   return (
     <div
       ref={scrollRef}
-      className="flex-1 overflow-auto p-6 space-y-6"
+      className="flex-1 overflow-y-auto px-6 py-4 space-y-4"
       style={{ WebkitOverflowScrolling: 'touch' }}
     >
       {messages.map((message) => {
@@ -53,20 +53,15 @@ export function ConversationArea({
           return (
             <motion.div
               key={message.id}
-              initial={{ y: 20, opacity: 0 }}
+              initial={{ y: 10, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
               className="flex justify-center"
             >
-              <div 
-                className="bg-muted px-3 py-2 rounded-2xl border border-border"
-                style={{
-                  color: '#ffffff !important',
-                  WebkitTextFillColor: '#ffffff !important',
-                  textFillColor: '#ffffff !important'
-                }}
-              >
-                <EstimateDisplay text={message.text} />
+              <div className="bg-neutral-800 border border-neutral-800 px-4 py-2 rounded-full">
+                <div className="text-[13px] text-[#a1a1a1] leading-none" style={{ fontFamily: 'Arimo, sans-serif' }}>
+                  <EstimateDisplay text={message.text} />
+                </div>
               </div>
             </motion.div>
           );
@@ -75,29 +70,44 @@ export function ConversationArea({
         return (
           <motion.div
             key={message.id}
-            initial={{ y: 20, opacity: 0 }}
+            initial={{ y: 10, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-            className={`flex gap-3 ${message.type === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
+            className={`flex gap-3 ${message.type === 'user' ? 'flex-row-reverse justify-start' : 'flex-row'}`}
           >
-            <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
-              message.type === 'user' ? 'bg-chart-1' : 'bg-gradient-to-br from-chart-1 to-chart-2'
-            }`}>
+            {/* Avatar */}
+            <div 
+              className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                message.type === 'user' 
+                  ? 'bg-[#1447e6]' 
+                  : 'bg-neutral-950 border border-neutral-800'
+              }`}
+            >
               {message.type === 'user' ? (
-                <User size={16} className="text-primary-foreground" />
+                <User size={20} className="text-neutral-900" strokeWidth={2} />
               ) : (
-                <Bot size={16} className="text-primary-foreground" />
+                <Bot size={20} className="text-neutral-50" strokeWidth={2} />
               )}
             </div>
-            <div className={`max-w-[75%] ${message.type === 'user' ? 'items-end' : 'items-start'} flex flex-col`}>
+            
+            {/* Message Content */}
+            <div className={`flex flex-col gap-1.5 ${message.type === 'user' ? 'items-end' : 'items-start'}`}>
               <div
-                className={`rounded-2xl px-3 py-2 ${
+                className={`rounded-2xl px-4 py-3 ${
                   message.type === 'user'
-                    ? 'bg-chart-1 text-primary-foreground'
-                    : 'bg-card border border-border text-foreground'
-                } shadow-sm`}
+                    ? 'bg-[#1447e6] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)]'
+                    : 'bg-neutral-950 border border-neutral-800'
+                }`}
+                style={{ maxWidth: '287px' }}
               >
-                <p className="leading-relaxed text-sm">{message.text}</p>
+                <p 
+                  className={`text-base leading-relaxed ${
+                    message.type === 'user' ? 'text-neutral-900' : 'text-neutral-50'
+                  }`}
+                  style={{ fontFamily: 'Arimo, sans-serif' }}
+                >
+                  {message.text}
+                </p>
               </div>
               
               {/* Show confirmation buttons for task completion messages */}
@@ -112,7 +122,9 @@ export function ConversationArea({
                 />
               )}
               
-              <span className="text-[10px] text-muted-foreground mt-1 px-1">{time}</span>
+              <span className="text-[11px] text-[#a1a1a1] px-1 leading-none" style={{ fontFamily: 'Arimo, sans-serif' }}>
+                {time}
+              </span>
             </div>
           </motion.div>
         );
